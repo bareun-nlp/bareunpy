@@ -1,5 +1,10 @@
 {
     "python.defaultInterpreterPath": "${workspaceFolder}/venv/bin/python",
     "python.envFile": "${workspaceFolder}/.vscode/.env",
-    "python.formatting.provider": "autopep8"
+    "python.formatting.provider": "autopep8",
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
 }

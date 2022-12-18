@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from typing import List
+import grpc
 from ._custom_dict_client import CustomDictionaryServiceClient
 from bareun.custom_dict_pb2 import CustomDictionary
 from bareun.dict_common_pb2 import DictSet
@@ -69,31 +70,21 @@ class CustomDict():
         >>> # cd2.save(dir="my_dir")
     """
 
-    def __init__(self, domain: str, host: str = "", port: int = 5656):
+    def __init__(self, domain: str, channel: grpc.Channel):
         """
         사용자 사전 래퍼(wrapper)의 생성자
 
         Args:
             domain (str): 사용자 사전의 이름, 반드시 지정되어야 합니다.
-            host (str, optional): 사용자 사전 관리를 수행할 바이칼 NLP 서버의 호스트명.
-                지정하지 않으면 기본값으로 사용합니다.
-            port (int, optional): 사용자 사전 관리를 수행할 바이칼 NLP 서버의 포트번호,
-                지정하지 않으면 5656 포트를 사용합니다.
+            channel(grpc.Channel): 원격에 연결할 정보
         Raises:
             ValueError: 사용자 사전의 이름이 없으면 에러를 발생시킵니다.
         """
-        if host:
-            host = host.strip()
-        if host == "" or host is None:
-            host = 'nlp.baikal.ai'
-        if port is None:
-            port = 5656
-        addr = host + ':' + str(port)
         self.domain = domain
         if domain is None:
             raise ValueError("domain name must be specified.")
 
-        self.stub = CustomDictionaryServiceClient(addr)
+        self.stub = CustomDictionaryServiceClient(channel)
         self.cp_set = set()
         self.np_set = set()
         self.cp_caret_set = set()

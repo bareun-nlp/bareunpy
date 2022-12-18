@@ -11,21 +11,15 @@ class BareunLanguageServiceClient:
     형태소 분석을 처리하는 클라이언트
     """
 
-    def __init__(self, remote: str):
+    def __init__(self, channel:grpc.Channel):
         """
         클라이언트 생성자
 
         Args:
-            remote (str): 원격 주소, IP주소:포트 또는 호스트이름:포트 형식으로 사용합니다.
+            channel (grpc.Channel): 원격 채널 정보
         """
-        channel = grpc.insecure_channel(
-            remote,
-            options=[
-                ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
-                ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
-            ])
-
-        self.stub = ls.LanguageServiceStub(channel)
+        self.channel = channel
+        self.stub = ls.LanguageServiceStub(self.channel)
 
     def analyze_syntax(self, content: str, domain: str = "", auto_split=False) -> pb.AnalyzeSyntaxResponse:
         """

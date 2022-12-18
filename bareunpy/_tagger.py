@@ -4,9 +4,9 @@ from sys import stdout
 from typing import IO, List, Any
 
 from google.protobuf.json_format import MessageToDict
-
+import grpc
 from bareunpy._custom_dict import CustomDict
-from bareunpy._lang_service_client import BareunLanguageServiceClient
+from bareunpy._lang_service_client import BareunLanguageServiceClient, MAX_MESSAGE_LENGTH
 from bareun.language_service_pb2 import AnalyzeSyntaxResponse, Morpheme, Sentence, Token
 
 
@@ -161,10 +161,16 @@ class Tagger:
             self.port = port
         else:
             self.port = 5656
-        self.domain = domain
 
-        addr = self.host + ':' + str(self.port)
-        self.client = BareunLanguageServiceClient(addr)
+        self.channel = grpc.insecure_channel(
+            f"{self.host}:{self.port}",
+            options=[
+                ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
+                ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
+            ])
+        self.client = BareunLanguageServiceClient(self.channel)
+
+        self.domain = domain
         self.custom_dicts = {}
 
     def set_domain(self, domain: str):
@@ -182,7 +188,7 @@ class Tagger:
         if domain in self.custom_dicts:
             return self.custom_dicts[domain]
         else:
-            self.custom_dicts[domain] = CustomDict(domain, self.host, self.port)
+            self.custom_dicts[domain] = CustomDict(domain, self.channel)
             return self.custom_dicts[domain]
 
     def tag(self, phrase: str, auto_split: bool = False) -> Tagged:

@@ -39,21 +39,15 @@ class CustomDictionaryServiceClient:
     The custom dictionary client which can create, update, list, delete your own one.
     """
 
-    def __init__(self, remote: str):
+    def __init__(self, channel: grpc.Channel):
         """사용자 사전을 관리하는 클라이언트 객체 생성자
 
         Args:
-            remote (str): 원격 주소, IP주소:포트 또는 호스트이름:포트 형식으로 사용합니다.
+            remote (grpc.Channel): 미리 만들어 놓은 channel 객체
         """
         super().__init__()
-        channel = grpc.insecure_channel(remote,
-                                        options=[
-                                            ('grpc.max_send_message_length',
-                                             MAX_MESSAGE_LENGTH),
-                                            ('grpc.max_receive_message_length',
-                                             MAX_MESSAGE_LENGTH),
-                                        ])
-        self.stub = cds.CustomDictionaryServiceStub(channel)
+        self.channel = channel
+        self.stub = cds.CustomDictionaryServiceStub(self.channel)
 
 
     def get_list(self) -> List[pb.CustomDictionaryMeta]:
