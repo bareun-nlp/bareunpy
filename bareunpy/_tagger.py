@@ -51,14 +51,18 @@ class Tagged:
         convert the message to a json object.
         :return: Json Obejct
         """
-        return MessageToDict(self.r)
+        return MessageToDict(self.r,
+            including_default_value_fields=True,
+            use_integers_for_enums=False)
 
     def as_json_str(self) -> str:
         """
         a json string representing analyzed sentences.
         :return: json string
         """
-        d = MessageToDict(self.r)
+        d = MessageToDict(self.r,
+            including_default_value_fields=True,
+            use_integers_for_enums=False)
         return json.dumps(d, ensure_ascii=False, indent=2)
 
     def print_as_json(self, out: IO = stdout):
@@ -67,7 +71,9 @@ class Tagged:
         :param out: File, if nothing provided, sys.stdout is used.
         :return: None
         """
-        d = MessageToDict(self.r)
+        d = MessageToDict(self.r,
+            including_default_value_fields=True,
+            use_integers_for_enums=False)
         json.dump(d, out, ensure_ascii=False, indent=2)
 
     @staticmethod
@@ -192,7 +198,7 @@ class Tagger:
             return self.custom_dicts[domain]
 
     def tag(self, phrase: str, auto_split: bool = False) -> Tagged:
-        if len(phrase) is 0:
+        if len(phrase) == 0:
             print("OOPS, no sentences.")
             return Tagged('', AnalyzeSyntaxResponse())
         return Tagged(phrase,
@@ -204,7 +210,7 @@ class Tagger:
         :param phrase: array of string
         :return: Tagged result instance
         """
-        if len(phrase) is 0:
+        if len(phrase) == 0:
             print("OOPS, no sentences.")
             return Tagged('', AnalyzeSyntaxResponse())
         p = '\n'.join(phrase)

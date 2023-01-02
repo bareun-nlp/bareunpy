@@ -50,9 +50,10 @@ import sys
 import os
 
 from bareunpy._tagger import Tagger, Tagged
+from bareunpy._tokenizer import Tokenizer, Tokenized
 from bareunpy._custom_dict import CustomDict
 from bareunpy._custom_dict_client import CustomDictionaryServiceClient
 from bareunpy._lang_service_client import BareunLanguageServiceClient
 
-version = "1.0"
-baikal_nlp_version = "1.7.3"
+version = "1.4.0"
+bareun_version = "1.7.26"
