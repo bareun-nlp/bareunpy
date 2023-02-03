@@ -7,7 +7,10 @@ from bareunpy import Tokenized
 def tokenizer_instance():
     import bareunpy
     ## FIXME change it nlp.bareun.ai
-    t = bareunpy.Tokenizer("localhost", 5658)
+    t = bareunpy.Tokenizer(
+        apikey="koba-42CXULQ-SDPU6ZA-RQ6QPBQ-4BMZCOA",
+        host="59.5.107.95",
+        port=5656)
     return t
 
 TEST_STR='오늘은 정말 추운 날이네요.'
@@ -106,7 +109,10 @@ def test_tokenized_nouns(tokenized: Tokenized):
 def tokenized() -> Tokenized:
     import bareunpy
     # FIXME change it nlp.bareun.ai
-    t = bareunpy.Tokenizer("localhost", 5658)
+    t = bareunpy.Tokenizer(
+        apikey="koba-42CXULQ-SDPU6ZA-RQ6QPBQ-4BMZCOA",
+        host="59.5.107.95",
+        port=5656)
     return t.tokenize(TEST_STR)
 
 def test_tokenized_verbs(tokenized: Tokenized):

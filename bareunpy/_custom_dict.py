@@ -70,7 +70,7 @@ class CustomDict():
         >>> # cd2.save(dir="my_dir")
     """
 
-    def __init__(self, domain: str, channel: grpc.Channel):
+    def __init__(self, apikey:str, domain: str, channel: grpc.Channel):
         """
         사용자 사전 래퍼(wrapper)의 생성자
 
@@ -84,7 +84,7 @@ class CustomDict():
         if domain is None:
             raise ValueError("domain name must be specified.")
 
-        self.stub = CustomDictionaryServiceClient(channel)
+        self.stub = CustomDictionaryServiceClient(channel, apikey)
         self.cp_set = set()
         self.np_set = set()
         self.cp_caret_set = set()

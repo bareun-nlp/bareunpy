@@ -13,10 +13,10 @@ pip3 install bareunpy
 
 ## How to get bareun
 - Go to https://bareun.ai/.
-  - With registration, for the first time, you can get a free license for 3 months.
-  - If you are a student or a researcher, you can get also a free license for 1 year,
-    which is able to renew after 1 year.
-- Or use docker image.
+  - With registration, for the first time, you can get a API-KEY to use it freely.
+  - With API-KEY, you can install the `bareun1` server.
+  - Or you can make a call to use this `bareunpy` library to any servers.
+- Or use docker image. See https://hub.docker.com/r/bareunai/bareun
 ```shell
 docker pull bareunai/bareun:latest
 ```
@@ -28,12 +28,16 @@ import sys
 import google.protobuf.text_format as tf
 from bareunpy import Tagger
 
+#
+# you can API-KEY from https://bareun.ai/
+#
+API_KEY="koba-42CXULQ-SDPU6ZA-RQ6QPBQ-4BMZCOA"
+
 # If you have your own localhost bareun.
-my_tagger = Tagger('localhost')
+my_tagger = Tagger(API_KEY, 'localhost')
 # or if you have your own bareun which is running on 10.8.3.211:15656.
-my_tagger = Tagger('10.8.3.211', 15656)
-# or with smaller public cloud instance, it may be slow. It is free.
-tagger = Tagger()
+my_tagger = Tagger(API_KEY, '10.8.3.211', 15656)
+
 
 # print results. 
 res = tagger.tags(["안녕하세요.", "반가워요!"])
@@ -95,11 +99,10 @@ import google.protobuf.text_format as tf
 from bareunpy import Tokenizer
 
 # If you have your own localhost bareun.
-my_tokenizer = Tokenizer('localhost')
+my_tokenizer = Tokenizer(API_KEY, 'localhost')
 # or if you have your own bareun which is running on 10.8.3.211:15656.
-my_tokenizer = Tagger('10.8.3.211', 15656)
-# or with smaller public cloud instance, it may be slow. It is free.
-tokenizer = Tokenizer()
+my_tokenizer = Tagger(API_KEY, '10.8.3.211', 15656)
+
 
 # print results. 
 tokenized = tokenizer.tokenize_list(["안녕하세요.", "반가워요!"])

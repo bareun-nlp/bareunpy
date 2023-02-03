@@ -39,7 +39,7 @@ class CustomDictionaryServiceClient:
     The custom dictionary client which can create, update, list, delete your own one.
     """
 
-    def __init__(self, channel: grpc.Channel):
+    def __init__(self, channel: grpc.Channel, apikey:str):
         """사용자 사전을 관리하는 클라이언트 객체 생성자
 
         Args:
@@ -47,6 +47,11 @@ class CustomDictionaryServiceClient:
         """
         super().__init__()
         self.channel = channel
+        self.apikey = apikey
+        self.metadata=(
+                ('api-key', self.apikey),
+                )
+
         self.stub = cds.CustomDictionaryServiceStub(self.channel)
 
 
@@ -61,7 +66,8 @@ class CustomDictionaryServiceClient:
         """
         req = Empty()
         try:
-            res = self.stub.GetCustomDictionaryList(req)
+            res, c = self.stub.GetCustomDictionaryList.with_call(
+                request=req, metadata=self.metadata)
             return res.domain_dicts
         except grpc.RpcError as e:
             raise e
@@ -83,7 +89,8 @@ class CustomDictionaryServiceClient:
         req = pb.GetCustomDictionaryRequest()
         req.domain_name = domain
         try:
-            res = self.stub.GetCustomDictionary(req)
+            res, c = self.stub.GetCustomDictionary.with_call(
+                request=req, metadata=self.metadata)
             return res.dict
         except grpc.RpcError as e:
             raise e
@@ -120,7 +127,8 @@ class CustomDictionaryServiceClient:
             build_dict_set(domain, 'cp-caret-set', cp_caret))
 
         try:
-            res = self.stub.UpdateCustomDictionary(req)
+            res, c = self.stub.UpdateCustomDictionary.with_call(
+                request=req, metadata=self.metadata)
             return res.updated_domain_name == domain
         except grpc.RpcError as e:
             raise e
@@ -143,7 +151,8 @@ class CustomDictionaryServiceClient:
         req.all = True
 
         try:
-            res = self.stub.RemoveCustomDictionaries(req)
+            res, c = self.stub.RemoveCustomDictionaries.with_call(
+                request=req, metadata=self.metadata)
             return res.deleted_domain_names.keys()
         except grpc.RpcError as e:
             raise e
@@ -169,7 +178,8 @@ class CustomDictionaryServiceClient:
         req.domain_names.extend(domains)
         req.all = False
         try:
-            res = self.stub.RemoveCustomDictionaries(req)
+            res, c = self.stub.RemoveCustomDictionaries.with_call(
+                request=req, metadata=self.metadata)
             return res.deleted_domain_names.keys()
         except grpc.RpcError as e:
             raise e

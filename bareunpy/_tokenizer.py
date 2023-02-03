@@ -199,7 +199,7 @@ class Tokenizer:
     :param port         : int. port  for bareun server
     """
 
-    def __init__(self, host: str = "", port: int = 5656):
+    def __init__(self, apikey:str, host: str = "", port: int = 5656):
 
         if host:
             host = host.strip()
@@ -213,13 +213,16 @@ class Tokenizer:
         else:
             self.port = 5656
 
+        if apikey == None or len(apikey) == 0:
+            raise ValueError("a apikey must be provided!")
+
         self.channel = grpc.insecure_channel(
             f"{self.host}:{self.port}",
             options=[
                 ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
                 ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
             ])
-        self.client = BareunLanguageServiceClient(self.channel)
+        self.client = BareunLanguageServiceClient(self.channel, apikey)
 
     def tokenize(self, phrase: str, auto_split: bool = False) -> Tokenized:
         if len(phrase) == 0:

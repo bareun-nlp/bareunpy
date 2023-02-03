@@ -11,7 +11,7 @@ class BareunLanguageServiceClient:
     형태소 분석을 처리하는 클라이언트
     """
 
-    def __init__(self, channel:grpc.Channel):
+    def __init__(self, channel:grpc.Channel, apikey:str):
         """
         클라이언트 생성자
 
@@ -19,6 +19,10 @@ class BareunLanguageServiceClient:
             channel (grpc.Channel): 원격 채널 정보
         """
         self.channel = channel
+        self.apikey = apikey
+        self.metadata=(
+                ('api-key', self.apikey),
+                )
         self.stub = ls.LanguageServiceStub(self.channel)
 
     def analyze_syntax(self, content: str,
@@ -52,11 +56,16 @@ class BareunLanguageServiceClient:
         req.auto_jointing = auto_jointing
         if domain:
             req.custom_domain = domain
-        try:
-            res = self.stub.AnalyzeSyntax(req)
+        try:            
+            res, c = self.stub.AnalyzeSyntax.with_call(
+                request=req, metadata=self.metadata)
             return res
         except grpc.RpcError as e:
             raise e
+        except Exception as e2:
+            import traceback
+            traceback.print_exc()
+            raise e2
 
     def tokenize(self, content: str, auto_split=False) -> pb.TokenizeResponse:
         """
@@ -80,7 +89,8 @@ class BareunLanguageServiceClient:
         req.encoding_type = pb.EncodingType.UTF32
         req.auto_split_sentence = auto_split
         try:
-            res = self.stub.Tokenize(req)
+            res, c = self.stub.Tokenize.with_call(
+                request=req, metadata=self.metadata)
             return res
         except grpc.RpcError as e:
             raise e

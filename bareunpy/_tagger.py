@@ -138,7 +138,7 @@ class Tagger:
     .. code-block:: python
         :emphasize-lines: 1
         >>> import bareunpy as brn
-        >>> tagger = brn.Tagger(domain="custom")
+        >>> tagger = brn.Tagger(apikey="kpba-YOURKEY", domain="custom")
         >>> print(tagger.morphs('안녕하세요, 반가워요.'))
         ['안녕', '하', '시', '어요', ',', '반갑', '어요', '.']
         >>> print(tagger.nouns('나비 허리에 새파란 초생달이 시리다.'))
@@ -151,7 +151,7 @@ class Tagger:
     :param domain       : custom domain name for analyzing request
     """
 
-    def __init__(self, host: str = "", port: int = 5656, domain: str = ""):
+    def __init__(self, apikey:str, host: str = "", port: int = 5656, domain: str = ""):
 
         if host:
             host = host.strip()
@@ -174,7 +174,12 @@ class Tagger:
                 ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
                 ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
             ])
-        self.client = BareunLanguageServiceClient(self.channel)
+        self.apikey = apikey
+
+        if apikey == None or len(apikey) == 0:
+            raise ValueError("a apikey must be provided!")
+
+        self.client = BareunLanguageServiceClient(self.channel, apikey)
 
         self.domain = domain
         self.custom_dicts = {}
@@ -194,15 +199,19 @@ class Tagger:
         if domain in self.custom_dicts:
             return self.custom_dicts[domain]
         else:
-            self.custom_dicts[domain] = CustomDict(domain, self.channel)
+            self.custom_dicts[domain] = CustomDict(self.apikey, domain,  self.channel)
             return self.custom_dicts[domain]
 
     def tag(self, phrase: str, auto_split: bool = False) -> Tagged:
         if len(phrase) == 0:
             print("OOPS, no sentences.")
             return Tagged('', AnalyzeSyntaxResponse())
-        return Tagged(phrase,
-                      self.client.analyze_syntax(phrase, self.domain, auto_split))
+        try:
+            res = self.client.analyze_syntax(phrase, self.domain, auto_split)
+            return Tagged(phrase, res)
+        except Exception as e:
+            print(e)
+            return Tagged('', AnalyzeSyntaxResponse())
 
     def tags(self, phrase: List[str]) -> Tagged:
         """
@@ -214,8 +223,11 @@ class Tagger:
             print("OOPS, no sentences.")
             return Tagged('', AnalyzeSyntaxResponse())
         p = '\n'.join(phrase)
-        return Tagged(p,
-                      self.client.analyze_syntax(p, self.domain, auto_split=False))
+        try:
+            res = self.client.analyze_syntax(p, self.domain, auto_split=False)
+            return Tagged(p, res)
+        except:
+            return Tagged('', AnalyzeSyntaxResponse())
 
     def pos(self, phrase: str, flatten: bool = True, join: bool = False, detail: bool = False) -> List:
         """
