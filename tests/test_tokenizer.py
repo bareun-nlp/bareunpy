@@ -10,7 +10,7 @@ def tokenizer_instance():
     t = bareunpy.Tokenizer(
         apikey="koba-42CXULQ-SDPU6ZA-RQ6QPBQ-4BMZCOA",
         host="10.3.8.44",
-        port=5656)
+        port=5757)
     return t
 
 TEST_STR='오늘은 정말 추운 날이네요.'
@@ -111,8 +111,9 @@ def tokenized() -> Tokenized:
     # FIXME change it nlp.bareun.ai
     t = bareunpy.Tokenizer(
         apikey="koba-42CXULQ-SDPU6ZA-RQ6QPBQ-4BMZCOA",
-        host="59.5.107.95",
-        port=5656)
+        host="10.3.8.44",
+        port=5757)
+
     return t.tokenize(TEST_STR)
 
 def test_tokenized_verbs(tokenized: Tokenized):

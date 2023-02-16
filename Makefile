@@ -12,10 +12,10 @@ venv-local:
 	@test -d venv || python3 -m venv venv
 
 venv-pip-upgrade: venv-local
-	@$(PIP3) install --upgrade pip &> /dev/null
+	@$(PIP3) install --upgrade pip 2> /dev/null
 
 venv/req-install.log: requirements.txt venv-pip-upgrade
-	@$(PY3) -c "import pkg_resources; pkg_resources.require(open('requirements.txt',mode='r'))" &> /dev/null \
+	@$(PY3) -c "import pkg_resources; pkg_resources.require(open('requirements.txt',mode='r'))" 2> /dev/null \
 	|| (echo "installing"; $(PIP3) install -r $< --log $@)
 
 venv: venv/req-install.log
@@ -27,7 +27,7 @@ clean:
 	find . -iname "*.pyc" -delete
 
 venv-poetry: venv
-	@$(PY3) -m pip install --upgrade poetry &> /dev/null
+	@$(PY3) -m pip install --upgrade poetry 2> /dev/null
 
 build: venv-poetry
 	@$(POETRY) build
