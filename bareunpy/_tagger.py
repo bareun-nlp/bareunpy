@@ -210,8 +210,7 @@ class Tagger:
             res = self.client.analyze_syntax(phrase, self.domain, auto_split)
             return Tagged(phrase, res)
         except Exception as e:
-            print(e)
-            return Tagged('', AnalyzeSyntaxResponse())
+            raise e
 
     def tags(self, phrase: List[str]) -> Tagged:
         """
@@ -226,8 +225,8 @@ class Tagger:
         try:
             res = self.client.analyze_syntax(p, self.domain, auto_split=False)
             return Tagged(p, res)
-        except:
-            return Tagged('', AnalyzeSyntaxResponse())
+        except Exception as e:
+            raise e
 
     def pos(self, phrase: str, flatten: bool = True, join: bool = False, detail: bool = False) -> List:
         """

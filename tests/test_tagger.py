@@ -7,7 +7,9 @@ import pytest
 def tagger_instance():
     import bareunpy
     ## FIXME change it nlp.bareun.ai
-    t = bareunpy.Tagger(apikey="koba-42CXULQ-SDPU6ZA-RQ6QPBQ-4BMZCOA", host="59.5.107.95")
+    t = bareunpy.Tagger(apikey="koba-42CXULQ-SDPU6ZA-RQ6QPBQ-4BMZCOA",
+                        host="10.3.8.44",
+                        port=5656)
     return t
 
 @pytest.fixture

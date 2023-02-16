@@ -9,7 +9,7 @@ def tokenizer_instance():
     ## FIXME change it nlp.bareun.ai
     t = bareunpy.Tokenizer(
         apikey="koba-42CXULQ-SDPU6ZA-RQ6QPBQ-4BMZCOA",
-        host="59.5.107.95",
+        host="10.3.8.44",
         port=5656)
     return t
 
