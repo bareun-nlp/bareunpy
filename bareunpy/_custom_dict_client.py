@@ -121,8 +121,8 @@ class CustomDictionaryServiceClient:
 
         req.dict.np_set.CopyFrom(build_dict_set(domain, 'np-set', np))
         req.dict.cp_set.CopyFrom(build_dict_set(domain, 'cp-set', cp))
-        req.dict.vv_set.CopyFrom(build_dict_set(domain, 'vv-set', cp))
-        req.dict.va_set.CopyFrom(build_dict_set(domain, 'va-set', cp))
+        req.dict.vv_set.CopyFrom(build_dict_set(domain, 'vv-set', vv))
+        req.dict.va_set.CopyFrom(build_dict_set(domain, 'va-set', va))
         req.dict.cp_caret_set.CopyFrom(
             build_dict_set(domain, 'cp-caret-set', cp_caret))
 
