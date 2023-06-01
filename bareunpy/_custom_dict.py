@@ -173,7 +173,7 @@ class CustomDict():
         """
         self.cp_caret_set = dict_set
 
-    def copy_cp_vv_set(self, dict_set: set):
+    def copy_vv_set(self, dict_set: set):
         """
         집합을 동사 사전으로 지정합니다.
 
@@ -182,7 +182,7 @@ class CustomDict():
         """
         self.vv_set = dict_set
 
-    def copy_cp_va_set(self, dict_set: set):
+    def copy_va_set(self, dict_set: set):
         """
         집합을 형용사 사전으로 지정합니다.
 
