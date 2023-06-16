@@ -202,7 +202,7 @@ class Tagger:
             self.custom_dicts[domain] = CustomDict(self.apikey, domain,  self.channel)
             return self.custom_dicts[domain]
 
-    def tag(self, phrase: str, auto_split: bool = False, auto_spacing: bool = True, auto_jointing: bool = False) -> Tagged:
+    def tag(self, phrase: str, auto_split: bool = False, auto_spacing: bool = True, auto_jointing: bool = True) -> Tagged:
         if len(phrase) == 0:
             print("OOPS, no sentences.")
             return Tagged('', AnalyzeSyntaxResponse())
@@ -212,7 +212,7 @@ class Tagger:
         except Exception as e:
             raise e
 
-    def tags(self, phrase: List[str], auto_split: bool = False, auto_spacing: bool = True, auto_jointing: bool = False) -> Tagged:
+    def tags(self, phrase: List[str], auto_split: bool = False, auto_spacing: bool = True, auto_jointing: bool = True) -> Tagged:
         """
         tag string array.
         :param phrase: array of string
