@@ -202,20 +202,23 @@ class Tagger:
             self.custom_dicts[domain] = CustomDict(self.apikey, domain,  self.channel)
             return self.custom_dicts[domain]
 
-    def tag(self, phrase: str, auto_split: bool = False) -> Tagged:
+    def tag(self, phrase: str, auto_split: bool = False, auto_spacing: bool = True, auto_jointing: bool = False) -> Tagged:
         if len(phrase) == 0:
             print("OOPS, no sentences.")
             return Tagged('', AnalyzeSyntaxResponse())
         try:
-            res = self.client.analyze_syntax(phrase, self.domain, auto_split)
+            res = self.client.analyze_syntax(phrase, self.domain, auto_split=auto_split, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
             return Tagged(phrase, res)
         except Exception as e:
             raise e
 
-    def tags(self, phrase: List[str]) -> Tagged:
+    def tags(self, phrase: List[str], auto_split: bool = False, auto_spacing: bool = True, auto_jointing: bool = False) -> Tagged:
         """
         tag string array.
         :param phrase: array of string
+        :param auto_split(bool, optional): Whether to automatically perform sentence split
+        :param auto_spacing(bool, optional): Whether to automatically perform space insertion for typo correction
+        :param auto_jointing(bool, optional): Whether to automatically perform word joining for typo correction
         :return: Tagged result instance
         """
         if len(phrase) == 0:
@@ -223,7 +226,7 @@ class Tagger:
             return Tagged('', AnalyzeSyntaxResponse())
         p = '\n'.join(phrase)
         try:
-            res = self.client.analyze_syntax(p, self.domain, auto_split=False)
+            res = self.client.analyze_syntax(p, self.domain, auto_split=auto_split, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
             return Tagged(p, res)
         except Exception as e:
             raise e
