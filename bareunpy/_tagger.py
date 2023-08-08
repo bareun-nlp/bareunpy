@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import json
 from sys import stdout
-from typing import IO, List, Any
+from typing import IO, List, Any, Union
 
 from google.protobuf.json_format import MessageToDict
 import grpc
 from bareunpy._custom_dict import CustomDict
 from bareunpy._lang_service_client import BareunLanguageServiceClient, MAX_MESSAGE_LENGTH
-from bareun.language_service_pb2 import AnalyzeSyntaxResponse, Morpheme, Sentence, Token
+from bareun.language_service_pb2 import AnalyzeSyntaxResponse, AnalyzeSyntaxListResponse, Morpheme, Sentence, Token
 
 
 class Tagged:
@@ -16,7 +16,7 @@ class Tagged:
     It has various output manipulations.
     """
 
-    def __init__(self, phrase: str, res: AnalyzeSyntaxResponse):
+    def __init__(self, phrase: Union[str, List[str]], res: Union[AnalyzeSyntaxResponse, AnalyzeSyntaxListResponse]):
         """
         constructor, which is used internally.
         :param phrase: requested sentences.
@@ -31,7 +31,7 @@ class Tagged:
             self.r = AnalyzeSyntaxResponse()
             self.phrase = ''
 
-    def msg(self) -> AnalyzeSyntaxResponse:
+    def msg(self) -> Union[AnalyzeSyntaxResponse, AnalyzeSyntaxListResponse]:
         """
         Protobuf message object containing all of NLP engine.
         """
@@ -228,6 +228,24 @@ class Tagger:
         try:
             res = self.client.analyze_syntax(p, self.domain, auto_split=auto_split, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
             return Tagged(p, res)
+        except Exception as e:
+            raise e
+
+    def taglist(self, phrase: List[str], auto_spacing: bool = True, auto_jointing: bool = True) -> Tagged:
+        """
+        the array is not being split and the input value is being returned as-is.
+        :param phrase: array of string
+        :param auto_split(bool, optional): Whether to automatically perform sentence split
+        :param auto_spacing(bool, optional): Whether to automatically perform space insertion for typo correction
+        :param auto_jointing(bool, optional): Whether to automatically perform word joining for typo correction
+        :return: Tagged result instance
+        """
+        if len(phrase) == 0:
+            print("OOPS, no sentences.")
+            return Tagged('', AnalyzeSyntaxListResponse())
+        try:
+            res = self.client.analyze_syntax_list(phrase, self.domain, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
+            return Tagged(phrase, res)
         except Exception as e:
             raise e
 
