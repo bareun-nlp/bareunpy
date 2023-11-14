@@ -1,6 +1,7 @@
 import grpc
 from typing import List
 
+import bareunpy
 import bareun.language_service_pb2 as pb
 import bareun.language_service_pb2_grpc as ls
 
@@ -12,7 +13,7 @@ class BareunLanguageServiceClient:
     형태소 분석을 처리하는 클라이언트
     """
 
-    def __init__(self, channel:grpc.Channel, apikey:str):
+    def __init__(self, channel:grpc.Channel, apikey:str, host:str, port:int):
         """
         클라이언트 생성자
 
@@ -23,7 +24,10 @@ class BareunLanguageServiceClient:
         self.apikey = apikey
         self.metadata=(
                 ('api-key', self.apikey),
+                ('user-agent', f'bareunpy/{bareunpy.version}')
                 )
+        self.host = host
+        self.port = port
         self.stub = ls.LanguageServiceStub(self.channel)
 
     def analyze_syntax(self, content: str,
@@ -101,7 +105,14 @@ class BareunLanguageServiceClient:
                 request=req, metadata=self.metadata)
             return res
         except grpc.RpcError as e:
-            raise e
+            if e.code() == grpc.StatusCode.PERMISSION_DENIED:
+                message = f'\n입력한 API key가 정확한지 확인해 주세요.\n > apikey: {self.apikey}'
+                raise Exception(message) from e
+            elif e.code() == grpc.StatusCode.UNAVAILABLE:
+                message = f'\n입력한 서버 주소가 정확한지 확인해 주세요.\n > host:port = {self.host}:{self.port}'
+                raise Exception(message) from e
+            else:
+                raise e
         except Exception as e2:
             import traceback
             traceback.print_exc()
