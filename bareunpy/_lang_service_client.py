@@ -29,7 +29,17 @@ class BareunLanguageServiceClient:
         self.host = host
         self.port = port
         self.stub = ls.LanguageServiceStub(self.channel)
-
+    
+    def _handle_grpc_error(self, e: grpc.RpcError):
+        """gRPC 에러를 처리하는 메서드"""
+        if e.code() == grpc.StatusCode.PERMISSION_DENIED:
+            message = f'\n입력한 API key가 정확한지 확인해 주세요.\n > apikey: {self.apikey}'
+        elif e.code() == grpc.StatusCode.UNAVAILABLE:
+            message = f'\n입력한 서버 주소가 정확한지 확인해 주세요.\n > host:port = {self.host}:{self.port}'
+        else:
+            raise e
+        raise Exception(message) from e
+    
     def analyze_syntax(self, content: str,
         domain: str = "",
         auto_split=False,
@@ -66,14 +76,7 @@ class BareunLanguageServiceClient:
                 request=req, metadata=self.metadata)
             return res
         except grpc.RpcError as e:
-            if e.code() == grpc.StatusCode.PERMISSION_DENIED:
-                message = f'\n입력한 API key가 정확한지 확인해 주세요.\n > apikey: {self.apikey}'
-                raise Exception(message) from e
-            elif e.code() == grpc.StatusCode.UNAVAILABLE:
-                message = f'\n입력한 서버 주소가 정확한지 확인해 주세요.\n > host:port = {self.host}:{self.port}'
-                raise Exception(message) from e
-            else:
-                raise e
+            self._handle_grpc_error(e)
         except Exception as e2:
             import traceback
             traceback.print_exc()
@@ -112,14 +115,7 @@ class BareunLanguageServiceClient:
                 request=req, metadata=self.metadata)
             return res
         except grpc.RpcError as e:
-            if e.code() == grpc.StatusCode.PERMISSION_DENIED:
-                message = f'\n입력한 API key가 정확한지 확인해 주세요.\n > apikey: {self.apikey}'
-                raise Exception(message) from e
-            elif e.code() == grpc.StatusCode.UNAVAILABLE:
-                message = f'\n입력한 서버 주소가 정확한지 확인해 주세요.\n > host:port = {self.host}:{self.port}'
-                raise Exception(message) from e
-            else:
-                raise e
+            self._handle_grpc_error(e)
         except Exception as e2:
             import traceback
             traceback.print_exc()
@@ -152,11 +148,8 @@ class BareunLanguageServiceClient:
                 request=req, metadata=self.metadata)
             return res
         except grpc.RpcError as e:
-            if e.code() == grpc.StatusCode.PERMISSION_DENIED:
-                message = f'\n입력한 API key가 정확한지 확인해 주세요.\n > apikey: {self.apikey}'
-                raise Exception(message) from e
-            elif e.code() == grpc.StatusCode.UNAVAILABLE:
-                message = f'\n입력한 서버 주소가 정확한지 확인해 주세요.\n > host:port = {self.host}:{self.port}'
-                raise Exception(message) from e
-            else:
-                raise e
+            self._handle_grpc_error(e)
+        except Exception as e2:
+            import traceback
+            traceback.print_exc()
+            raise e2

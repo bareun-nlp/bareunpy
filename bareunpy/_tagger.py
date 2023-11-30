@@ -183,7 +183,17 @@ class Tagger:
 
         self.domain = domain
         self.custom_dicts = {}
-
+    
+    def _handle_grpc_error(self, e: grpc.RpcError):
+        """gRPC 에러를 처리하는 메서드"""
+        if e.code() == grpc.StatusCode.PERMISSION_DENIED:
+            message = f'\n입력한 API key가 정확한지 확인해 주세요.\n > apikey: {self.apikey}'
+        elif e.code() == grpc.StatusCode.UNAVAILABLE:
+            message = f'\n입력한 서버 주소가 정확한지 확인해 주세요.\n > host:port = {self.host}:{self.port}'
+        else:
+            raise e
+        raise Exception(message) from e
+    
     def set_domain(self, domain: str):
         """
         Set domain of custom dict.
@@ -209,8 +219,8 @@ class Tagger:
         try:
             res = self.client.analyze_syntax(phrase, self.domain, auto_split=auto_split, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
             return Tagged(phrase, res)
-        except Exception as e:
-            raise e
+        except grpc.RpcError as e:
+            self._handle_grpc_error(e)
 
     def tags(self, phrase: List[str], auto_split: bool = False, auto_spacing: bool = True, auto_jointing: bool = True) -> Tagged:
         """
@@ -228,8 +238,8 @@ class Tagger:
         try:
             res = self.client.analyze_syntax(p, self.domain, auto_split=auto_split, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
             return Tagged(p, res)
-        except Exception as e:
-            raise e
+        except grpc.RpcError as e:
+            self._handle_grpc_error(e)
 
     def taglist(self, phrase: List[str], auto_spacing: bool = True, auto_jointing: bool = True) -> Tagged:
         """
@@ -246,8 +256,8 @@ class Tagger:
         try:
             res = self.client.analyze_syntax_list(phrase, self.domain, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
             return Tagged(phrase, res)
-        except Exception as e:
-            raise e
+        except grpc.RpcError as e:
+            self._handle_grpc_error(e)
 
     def pos(self, phrase: str, flatten: bool = True, join: bool = False, detail: bool = False) -> List:
         """
