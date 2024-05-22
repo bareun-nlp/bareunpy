@@ -173,15 +173,15 @@ def test_tagger_get_custom_dict_cp_caret_set(tagger_instance):
     except TypeError as e:
         assert False
 
-def test_exception_apikey_tagger(tagger_error_apikey_instance, sample1):
+def test_exception_apikey(tagger_error_apikey_instance, sample1):
     try:
         tagger_error_apikey_instance.pos(sample1)
     except Exception as e:
-        assert e.args[0][:27] == '\n입력한 API key가 정확한지 확인해 주세요.'
+        assert e.args[0][:27] == '\n입력한 API KEY가 정확한지 확인해 주세요.'
 
-def test_exception_host_tagger(tagger_error_host_instance, sample1):
+def test_exception_host(tagger_error_host_instance, sample1):
     try:
         tagger_error_host_instance.pos(sample1)
     except Exception as e:
-        assert e.args[0][:25] == '\n입력한 서버 주소가 정확한지 확인해 주세요.'
+        assert e.args[0][:16] == '\n서버에 연결할 수 없습니다.'
 
