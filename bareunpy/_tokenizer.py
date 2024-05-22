@@ -226,10 +226,11 @@ class Tokenizer:
     
     def _handle_grpc_error(self, e: grpc.RpcError):
         """gRPC 에러를 처리하는 메서드"""
+        server_message = e.details() if e.details() else "서버에서 추가 메시지를 제공하지 않았습니다."
         if e.code() == grpc.StatusCode.PERMISSION_DENIED:
-            message = f'\n입력한 API key가 정확한지 확인해 주세요.\n > apikey: {self.apikey}'
+            message = f'\n입력한 API KEY가 정확한지 확인해 주세요.\n > APIKEY: {self.apikey}\n서버 메시지: {server_message}'
         elif e.code() == grpc.StatusCode.UNAVAILABLE:
-            message = f'\n입력한 서버 주소가 정확한지 확인해 주세요.\n > host:port = {self.host}:{self.port}'
+            message = f'\n서버에 연결할 수 없습니다. 입력한 서버주소 [{self.host}:{self.port}]가 정확한지 확인해 주세요.\n서버 메시지: {server_message}'
         else:
             raise e
         raise Exception(message) from e
