@@ -128,13 +128,13 @@ def test_exception_apikey_tokenizer(tokenizer_error_apikey_instance, sample1):
     try:
         m = tokenizer_error_apikey_instance.tokenize(sample1).msg()
     except Exception as e:
-        assert e.args[0][:27] == '\n입력한 API key가 정확한지 확인해 주세요.'
+        assert e.args[0][:27] == '\n입력한 API KEY가 정확한지 확인해 주세요.'
 
 def test_exception_host_tokenizer(tokenizer_error_host_instance, sample1):
     try:
         m = tokenizer_error_host_instance.tokenize(sample1).msg()
     except Exception as e:
-        assert e.args[0][:25] == '\n입력한 서버 주소가 정확한지 확인해 주세요.'
+        assert e.args[0][:16] == '\n서버에 연결할 수 없습니다.'
 
 @pytest.fixture
 def tokenized() -> Tokenized:
