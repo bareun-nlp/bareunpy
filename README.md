@@ -31,7 +31,7 @@ from bareunpy import Tagger
 # You can get an API-KEY from https://bareun.ai/
 # Please note that you need to sign up and verify your email.
 # 아래에 "https://bareun.ai/"에서 이메일 인증 후 발급받은 API KEY("koba-...")를 입력해주세요. "로그인-내정보 확인"
-API_KEY="koba-ABCDEFG-1234567-LMNOPQR-7654321" # <- 본인의 API KEY로 교체(Replace this with your own API KEY)
+API_KEY = "koba-ABCDEFG-1234567-LMNOPQR-7654321" # <- 본인의 API KEY로 교체(Replace this with your own API KEY)
 
 # If you have your own localhost bareun.
 my_tagger = Tagger(API_KEY, 'localhost')
@@ -101,7 +101,7 @@ from bareunpy import Tokenizer
 # You can get an API-KEY from https://bareun.ai/
 # Please note that you need to sign up and verify your email.
 # 아래에 "https://bareun.ai/"에서 이메일 인증 후 발급받은 API KEY("koba-...")를 입력해주세요. "로그인-내정보 확인"
-API_KEY="koba-ABCDEFG-1234567-LMNOPQR-7654321" # <- 본인의 API KEY로 교체(Replace this with your own API KEY)
+API_KEY = "koba-ABCDEFG-1234567-LMNOPQR-7654321" # <- 본인의 API KEY로 교체(Replace this with your own API KEY)
 
 # If you have your own localhost bareun.
 my_tokenizer = Tokenizer(API_KEY, 'localhost')
