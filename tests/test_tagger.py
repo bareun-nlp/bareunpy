@@ -13,6 +13,22 @@ def tagger_instance():
     return t
 
 @pytest.fixture
+def tagger_error_host_instance():
+    import bareunpy
+    t = bareunpy.Tagger(apikey="koba-42CXULQ-SDPU6ZA-RQ6QPBQ-4BMZCOA",
+                        host="10.3.8.44:5656",
+                        port=5656)
+    return t
+
+@pytest.fixture
+def tagger_error_apikey_instance():
+    import bareunpy
+    t = bareunpy.Tagger(apikey="koba-42CXULQ-SDPU6ZA",
+                        host="10.3.8.44",
+                        port=5656)
+    return t
+
+@pytest.fixture
 def sample1():
     return '오늘은 정말 추운 날이네요.'
 
@@ -156,3 +172,16 @@ def test_tagger_get_custom_dict_cp_caret_set(tagger_instance):
         assert '자연어^처리^엔진' in dic.cp_caret_set.items
     except TypeError as e:
         assert False
+
+def test_exception_apikey(tagger_error_apikey_instance, sample1):
+    try:
+        tagger_error_apikey_instance.pos(sample1)
+    except Exception as e:
+        assert e.args[0][:27] == '\n입력한 API KEY가 정확한지 확인해 주세요.'
+
+def test_exception_host(tagger_error_host_instance, sample1):
+    try:
+        tagger_error_host_instance.pos(sample1)
+    except Exception as e:
+        assert e.args[0][:16] == '\n서버에 연결할 수 없습니다.'
+

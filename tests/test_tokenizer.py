@@ -13,6 +13,26 @@ def tokenizer_instance():
         port=5757)
     return t
 
+@pytest.fixture
+def tokenizer_error_host_instance():
+    import bareunpy
+    ## FIXME change it nlp.bareun.ai
+    t = bareunpy.Tokenizer(
+        apikey="koba-42CXULQ-SDPU6ZA-RQ6QPBQ-4BMZCOA",
+        host="10.3.8.44:5757",
+        port=5757)
+    return t
+
+@pytest.fixture
+def tokenizer_error_apikey_instance():
+    import bareunpy
+    ## FIXME change it nlp.bareun.ai
+    t = bareunpy.Tokenizer(
+        apikey="koba-42CXULQ-SDPU6ZA",
+        host="10.3.8.44",
+        port=5757)
+    return t
+
 TEST_STR='오늘은 정말 추운 날이네요.'
 @pytest.fixture
 def sample1():
@@ -104,6 +124,17 @@ def test_tokenized_nouns(tokenized: Tokenized):
            ['오늘',
             '날']
 
+def test_exception_apikey_tokenizer(tokenizer_error_apikey_instance, sample1):
+    try:
+        m = tokenizer_error_apikey_instance.tokenize(sample1).msg()
+    except Exception as e:
+        assert e.args[0][:27] == '\n입력한 API KEY가 정확한지 확인해 주세요.'
+
+def test_exception_host_tokenizer(tokenizer_error_host_instance, sample1):
+    try:
+        m = tokenizer_error_host_instance.tokenize(sample1).msg()
+    except Exception as e:
+        assert e.args[0][:16] == '\n서버에 연결할 수 없습니다.'
 
 @pytest.fixture
 def tokenized() -> Tokenized:

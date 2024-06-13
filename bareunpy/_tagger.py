@@ -179,11 +179,22 @@ class Tagger:
         if apikey == None or len(apikey) == 0:
             raise ValueError("a apikey must be provided!")
 
-        self.client = BareunLanguageServiceClient(self.channel, apikey)
+        self.client = BareunLanguageServiceClient(self.channel, apikey, host, port)
 
         self.domain = domain
         self.custom_dicts = {}
-
+    
+    def _handle_grpc_error(self, e: grpc.RpcError):
+        """gRPC 에러를 처리하는 메서드"""
+        server_message = e.details() if e.details() else "서버에서 추가 메시지를 제공하지 않았습니다."
+        if e.code() == grpc.StatusCode.PERMISSION_DENIED:
+            message = f'\n입력한 API KEY가 정확한지 확인해 주세요.\n > APIKEY: {self.apikey}\n서버 메시지: {server_message}'
+        elif e.code() == grpc.StatusCode.UNAVAILABLE:
+            message = f'\n서버에 연결할 수 없습니다. 입력한 서버주소 [{self.host}:{self.port}]가 정확한지 확인해 주세요.\n서버 메시지: {server_message}'
+        else:
+            raise e
+        raise Exception(message) from e
+    
     def set_domain(self, domain: str):
         """
         Set domain of custom dict.
@@ -209,8 +220,8 @@ class Tagger:
         try:
             res = self.client.analyze_syntax(phrase, self.domain, auto_split=auto_split, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
             return Tagged(phrase, res)
-        except Exception as e:
-            raise e
+        except grpc.RpcError as e:
+            self._handle_grpc_error(e)
 
     def tags(self, phrase: List[str], auto_split: bool = False, auto_spacing: bool = True, auto_jointing: bool = True) -> Tagged:
         """
@@ -228,8 +239,8 @@ class Tagger:
         try:
             res = self.client.analyze_syntax(p, self.domain, auto_split=auto_split, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
             return Tagged(p, res)
-        except Exception as e:
-            raise e
+        except grpc.RpcError as e:
+            self._handle_grpc_error(e)
 
     def taglist(self, phrase: List[str], auto_spacing: bool = True, auto_jointing: bool = True) -> Tagged:
         """
@@ -246,8 +257,8 @@ class Tagger:
         try:
             res = self.client.analyze_syntax_list(phrase, self.domain, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
             return Tagged(phrase, res)
-        except Exception as e:
-            raise e
+        except grpc.RpcError as e:
+            self._handle_grpc_error(e)
 
     def pos(self, phrase: str, flatten: bool = True, join: bool = False, detail: bool = False) -> List:
         """
