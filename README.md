@@ -151,3 +151,37 @@ ss = tokenized.symbols()
 print(ss)
 
 ```
+
+## How to use, spelling corrector
+```python
+from bareunpy import Corrector
+
+# You can get an API-KEY from https://bareun.ai/
+# Please note that you need to sign up and verify your email.
+# 아래에 "https://bareun.ai/"에서 이메일 인증 후 발급받은 API KEY("koba-...")를 입력해주세요. "로그인-내정보 확인"
+API_KEY = "koba-ABCDEFG-1234567-LMNOPQR-7654321"  # <- 본인의 API KEY로 교체(Replace this with your own API KEY)
+
+# Initialize Corrector
+corrector = Corrector(API_KEY)
+
+# Single sentence correction
+response = corrector.correct_error("영수 도 줄기가 얇어서 시들을 것 같은 꽃에물을 주었다.")
+print(f"Original: {response.origin}")
+print(f"Corrected: {response.revised}")
+corrector.print_results(response)
+
+# Multiple sentences correction
+responses = corrector.correct_error_list([
+    "어머니 께서 만들어주신김치찌게가너무맵다며동생이울어버렸다.",
+    "영수 도 줄기가 얇어서 시들을 것 같은 꽃에물을 주었다."
+])
+for res in responses:
+    print(f"Original: {res.origin}")
+    print(f"Corrected: {res.revised}")
+
+corrector.print_results(responses)
+
+# JSON output
+corrector.print_as_json(response)
+
+```

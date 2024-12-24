@@ -179,7 +179,7 @@ class Tagger:
         if apikey == None or len(apikey) == 0:
             raise ValueError("a apikey must be provided!")
 
-        self.client = BareunLanguageServiceClient(self.channel, apikey, host, port)
+        self.client = BareunLanguageServiceClient(self.channel, apikey, self.host, self.port)
 
         self.domain = domain
         self.custom_dicts = {}

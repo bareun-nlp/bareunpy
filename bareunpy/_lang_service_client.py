@@ -4,6 +4,7 @@ from typing import List
 import bareunpy
 import bareun.language_service_pb2 as pb
 import bareun.language_service_pb2_grpc as ls
+import bareun.lang_common_pb2 as lpb
 
 MAX_MESSAGE_LENGTH = 100 * 1024 * 1024
 
@@ -37,7 +38,10 @@ class BareunLanguageServiceClient:
             message = f'\n입력한 API KEY가 정확한지 확인해 주세요.\n > APIKEY: {self.apikey}\n서버 메시지: {server_message}'
         elif e.code() == grpc.StatusCode.UNAVAILABLE:
             message = f'\n서버에 연결할 수 없습니다. 입력한 서버주소 [{self.host}:{self.port}]가 정확한지 확인해 주세요.\n서버 메시지: {server_message}'
+        elif e.code() == grpc.StatusCode.INVALID_ARGUMENT:
+            message = f'\n잘못된 요청이 서버로 전송되었습니다. 입력 데이터를 확인하세요.\n서버 메시지: {server_message}'
         else:
+            message = f'알 수 없는 오류가 발생했습니다.\n서버 메시지: {server_message}'
             raise e
         raise Exception(message) from e
     
@@ -66,7 +70,7 @@ class BareunLanguageServiceClient:
         # req.document = pb.Document()
         req.document.content = content
         req.document.language = "ko_KR"
-        req.encoding_type = pb.EncodingType.UTF32
+        req.encoding_type = lpb.EncodingType.UTF32
         req.auto_split_sentence = auto_split
         req.auto_spacing = auto_spacing
         req.auto_jointing = auto_jointing
@@ -106,7 +110,7 @@ class BareunLanguageServiceClient:
         req = pb.AnalyzeSyntaxListRequest()
         req.sentences.extend(content)
         req.language = "ko_KR"
-        req.encoding_type = pb.EncodingType.UTF32
+        req.encoding_type = lpb.EncodingType.UTF32
         req.auto_spacing = auto_spacing
         req.auto_jointing = auto_jointing
         if domain:
@@ -142,7 +146,7 @@ class BareunLanguageServiceClient:
         # req.document = pb.Document()
         req.document.content = content
         req.document.language = "ko_KR"
-        req.encoding_type = pb.EncodingType.UTF32
+        req.encoding_type = lpb.EncodingType.UTF32
         req.auto_split_sentence = auto_split
         try:
             res, c = self.stub.Tokenize.with_call(
