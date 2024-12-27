@@ -51,6 +51,7 @@ import os
 
 from bareunpy._tagger import Tagger, Tagged
 from bareunpy._tokenizer import Tokenizer, Tokenized
+from bareunpy._corrector import Corrector
 from bareunpy._custom_dict import CustomDict
 from bareunpy._custom_dict_client import CustomDictionaryServiceClient
 from bareunpy._lang_service_client import BareunLanguageServiceClient
