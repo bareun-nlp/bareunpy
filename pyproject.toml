@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bareunpy"
-version = "1.6.6"
+version = "1.6.7"
 description = "The bareun python library using grpc"
 authors = ["Gihyun YUN <gih2yun@baikal.ai>"]
 license = "BSD-3-Clause"
