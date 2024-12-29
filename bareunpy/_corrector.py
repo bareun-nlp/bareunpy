@@ -47,7 +47,7 @@ class Corrector:
 
     :param apikey: str. Bareun API 키
     :param host: str. gRPC 서버 호스트, 로컬에 바른 서버 설치시 'localhost' 입력 (기본값: nlp.bareun.ai)
-    :param port: int. gRPC 서버 포트 (기본값: 5656)
+    :param port: int. gRPC 서버 포트 (기본값: 5656, 서버가 도커인 경우 5757)
     """
 
     def __init__(self, apikey: str, host: str = "", port: int = 5656):

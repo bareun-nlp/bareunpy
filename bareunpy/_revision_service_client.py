@@ -37,7 +37,7 @@ class BareunRevisionServiceClient:
         if e.code() == grpc.StatusCode.PERMISSION_DENIED:
             message = f'\n입력한 API KEY가 정확한지 확인해 주세요.\n > APIKEY: {self.apikey}\n서버 메시지: {server_message}'
         elif e.code() == grpc.StatusCode.UNAVAILABLE:
-            message = f'\n서버에 연결할 수 없습니다. 입력한 서버주소 [{self.host}:{self.port}]를 확인하세요.\n서버 메시지: {server_message}'
+            message = f'\n서버에 연결할 수 없습니다. 입력한 서버주소 [{self.host}:{self.port}]를 확인하세요.\n서버 메시지: {server_message}\n서버를 도커로 설치한 경우 port는 5757로 호출'
         elif e.code() == grpc.StatusCode.INVALID_ARGUMENT:
             message = f'\n잘못된 요청이 서버로 전송되었습니다. 입력 데이터를 확인하세요.\n서버 메시지: {server_message}'
         else:
