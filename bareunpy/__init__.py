@@ -56,5 +56,5 @@ from bareunpy._custom_dict import CustomDict
 from bareunpy._custom_dict_client import CustomDictionaryServiceClient
 from bareunpy._lang_service_client import BareunLanguageServiceClient
 
-version = "1.6.7"
+version = "1.6.8"
 bareun_version = "3.0.0"
