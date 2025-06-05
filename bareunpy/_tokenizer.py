@@ -50,18 +50,14 @@ class Tokenized:
         convert the message to a json object.
         :return: Json Obejct
         """
-        return MessageToDict(self.r, 
-            including_default_value_fields=True,
-            use_integers_for_enums=False)
+        return MessageToDict(self.r, True)
 
     def as_json_str(self) -> str:
         """
         a json string representing analyzed sentences.
         :return: json string
         """
-        d = MessageToDict(self.r,
-            including_default_value_fields=True,
-            use_integers_for_enums=False)
+        d = MessageToDict(self.r, True)
         return json.dumps(d, ensure_ascii=False, indent=2)
 
     def print_as_json(self, out: IO = stdout):
@@ -70,9 +66,7 @@ class Tokenized:
         :param out: File, if nothing provided, sys.stdout is used.
         :return: None
         """
-        d = MessageToDict(self.r,
-            including_default_value_fields=True,
-            use_integers_for_enums=False)
+        d = MessageToDict(self.r, True)
         json.dump(d, out, ensure_ascii=False, indent=2)
 
     @staticmethod
@@ -215,7 +209,7 @@ class Tokenizer:
 
         if apikey == None or len(apikey) == 0:
             raise ValueError("a apikey must be provided!")
-
+        self.apikey = apikey
         self.channel = grpc.insecure_channel(
             f"{self.host}:{self.port}",
             options=[
@@ -226,10 +220,12 @@ class Tokenizer:
     
     def _handle_grpc_error(self, e: grpc.RpcError):
         """gRPC 에러를 처리하는 메서드"""
-        server_message = e.details() if e.details() else "서버에서 추가 메시지를 제공하지 않았습니다."
-        if e.code() == grpc.StatusCode.PERMISSION_DENIED:
+        details = getattr(e, "details", lambda: None)()
+        code = getattr(e, "code", lambda: grpc.StatusCode.OK)()
+        server_message = details if details else "서버에서 추가 메시지를 제공하지 않았습니다."
+        if code == grpc.StatusCode.PERMISSION_DENIED:
             message = f'\n입력한 API KEY가 정확한지 확인해 주세요.\n > APIKEY: {self.apikey}\n서버 메시지: {server_message}'
-        elif e.code() == grpc.StatusCode.UNAVAILABLE:
+        elif code == grpc.StatusCode.UNAVAILABLE:
             message = f'\n서버에 연결할 수 없습니다. 입력한 서버주소 [{self.host}:{self.port}]가 정확한지 확인해 주세요.\n서버 메시지: {server_message}'
         else:
             raise e

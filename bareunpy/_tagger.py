@@ -51,18 +51,14 @@ class Tagged:
         convert the message to a json object.
         :return: Json Obejct
         """
-        return MessageToDict(self.r,
-            including_default_value_fields=True,
-            use_integers_for_enums=False)
+        return MessageToDict(self.r, True)
 
     def as_json_str(self) -> str:
         """
         a json string representing analyzed sentences.
         :return: json string
         """
-        d = MessageToDict(self.r,
-            including_default_value_fields=True,
-            use_integers_for_enums=False)
+        d = MessageToDict(self.r, True)
         return json.dumps(d, ensure_ascii=False, indent=2)
 
     def print_as_json(self, out: IO = stdout):
@@ -71,9 +67,7 @@ class Tagged:
         :param out: File, if nothing provided, sys.stdout is used.
         :return: None
         """
-        d = MessageToDict(self.r,
-            including_default_value_fields=True,
-            use_integers_for_enums=False)
+        d = MessageToDict(self.r, True)
         json.dump(d, out, ensure_ascii=False, indent=2)
 
     @staticmethod
@@ -138,7 +132,7 @@ class Tagger:
     .. code-block:: python
         :emphasize-lines: 1
         >>> import bareunpy as brn
-        >>> tagger = brn.Tagger(apikey="kpba-YOURKEY", domain="custom")
+        >>> tagger = brn.Tagger(apikey="kpba-YOURKEY", custom_dicts=["custom", "my"])
         >>> print(tagger.morphs('안녕하세요, 반가워요.'))
         ['안녕', '하', '시', '어요', ',', '반갑', '어요', '.']
         >>> print(tagger.nouns('나비 허리에 새파란 초생달이 시리다.'))
@@ -148,15 +142,13 @@ class Tagger:
          ('을', 'JKO'), ('핥', 'VV'), ('고', 'EC'), ('있', 'VX'), ('었', 'EP'), ('다', 'EF'), ('.', 'SF')]
     :param host         : str. host name for bareun server
     :param port         : int. port  for bareun server
-    :param domain       : custom domain name for analyzing request
+    :param custom_dicts : List[str]. custom dictionary names for analyzing request
     """
 
-    def __init__(self, apikey:str, host: str = "", port: int = 5656, domain: str = ""):
+    def __init__(self, apikey:str, host: str = "", port: int = 5656, custom_dicts: List[str] = []):
 
         if host:
             host = host.strip()
-        if domain:
-            domain = domain.strip()
 
         if host == "" or host is None:
             self.host = 'nlp.bareun.ai'
@@ -177,48 +169,64 @@ class Tagger:
         self.apikey = apikey
 
         if apikey == None or len(apikey) == 0:
-            raise ValueError("a apikey must be provided!")
+            raise ValueError("an apikey must be provided!")
 
         self.client = BareunLanguageServiceClient(self.channel, apikey, self.host, self.port)
 
-        self.domain = domain
-        self.custom_dicts = {}
+        self.custom_dicts = custom_dicts
+        self.internal_custom_dicts = {}
     
     def _handle_grpc_error(self, e: grpc.RpcError):
         """gRPC 에러를 처리하는 메서드"""
-        server_message = e.details() if e.details() else "서버에서 추가 메시지를 제공하지 않았습니다."
-        if e.code() == grpc.StatusCode.PERMISSION_DENIED:
+        details = getattr(e, "details", lambda: None)()
+        code = getattr(e, "code", lambda: grpc.StatusCode.OK)()
+
+        server_message = details if details else "서버에서 추가 메시지를 제공하지 않았습니다."
+        if code == grpc.StatusCode.PERMISSION_DENIED:
             message = f'\n입력한 API KEY가 정확한지 확인해 주세요.\n > APIKEY: {self.apikey}\n서버 메시지: {server_message}'
-        elif e.code() == grpc.StatusCode.UNAVAILABLE:
+        elif code == grpc.StatusCode.UNAVAILABLE:
             message = f'\n서버에 연결할 수 없습니다. 입력한 서버주소 [{self.host}:{self.port}]가 정확한지 확인해 주세요.\n서버 메시지: {server_message}'
         else:
             raise e
         raise Exception(message) from e
-    
+
+    @DeprecationWarning
     def set_domain(self, domain: str):
         """
         Set domain of custom dict.
         :param domain: domain name of custom dict
         """
-        self.domain = domain
+        if len(self.custom_dicts) == 0:
+            self.custom_dicts = []
+        self.custom_dicts.append(domain)
 
-    def custom_dict(self, domain: str) -> CustomDict:
-        # self.domain = domain
-        if domain == "" or domain is None:
-            raise ValueError("invalid domain name for custom dict")
-
-        if domain in self.custom_dicts:
-            return self.custom_dicts[domain]
+    def set_custom_dicts(self, custom_dicts: List[str]):
+        """
+        Set domain of custom dict.
+        :param domain: domain name of custom dict
+        """
+        if len(custom_dicts) > 0:
+            self.custom_dicts = custom_dicts
         else:
-            self.custom_dicts[domain] = CustomDict(self.apikey, domain,  self.channel)
-            return self.custom_dicts[domain]
+            self.custom_dicts = []
+
+    def custom_dict(self, name: str) -> CustomDict:
+        # self.domain = domain
+        if name == "" or name is None:
+            raise ValueError("invalid name for custom dict")
+
+        if name in self.internal_custom_dicts:
+            return self.internal_custom_dicts[name]
+        else:
+            self.internal_custom_dicts[name] = CustomDict(self.apikey, name,  self.channel)
+            return self.internal_custom_dicts[name]
 
     def tag(self, phrase: str, auto_split: bool = False, auto_spacing: bool = True, auto_jointing: bool = True) -> Tagged:
         if len(phrase) == 0:
             print("OOPS, no sentences.")
             return Tagged('', AnalyzeSyntaxResponse())
         try:
-            res = self.client.analyze_syntax(phrase, self.domain, auto_split=auto_split, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
+            res = self.client.analyze_syntax(phrase, self.custom_dicts, auto_split=auto_split, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
             return Tagged(phrase, res)
         except grpc.RpcError as e:
             self._handle_grpc_error(e)
@@ -237,7 +245,7 @@ class Tagger:
             return Tagged('', AnalyzeSyntaxResponse())
         p = '\n'.join(phrase)
         try:
-            res = self.client.analyze_syntax(p, self.domain, auto_split=auto_split, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
+            res = self.client.analyze_syntax(p, self.custom_dicts, auto_split=auto_split, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
             return Tagged(p, res)
         except grpc.RpcError as e:
             self._handle_grpc_error(e)
@@ -255,7 +263,7 @@ class Tagger:
             print("OOPS, no sentences.")
             return Tagged('', AnalyzeSyntaxListResponse())
         try:
-            res = self.client.analyze_syntax_list(phrase, self.domain, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
+            res = self.client.analyze_syntax_list(phrase, self.custom_dicts, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
             return Tagged(phrase, res)
         except grpc.RpcError as e:
             self._handle_grpc_error(e)

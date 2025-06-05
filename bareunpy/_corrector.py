@@ -20,7 +20,6 @@ class Corrector:
         >>> from bareunpy import Corrector
         >>> corrector = Corrector(apikey="koba-YOURKEY")
         
-        # 단일 문장 교정
         >>> response = corrector.correct_error("영수 도 줄기가 얇어서 시들을 것 같은 꽃에물을 주었더니 고은 꽃이 피었다.")
         >>> corrector.print_results(response)
             === 맞춤법 검사 결과 1===
@@ -37,13 +36,6 @@ class Corrector:
                     - 조사는 그 앞말에 붙여 쓴다. (일반) 
                 1-2 ...
 
-        # 여러 문장 교정
-        >>> responses = corrector.correct_error_list([
-        ...     "어머니께서 만들어주신김치찌게가너무맵다며동생이울어버렸다.",
-        ...     "영수 도 줄기가 얇어서 시들을 것 같은 꽃에물을 주었더니 고은 꽃이 피었다."
-        ... ])
-        >>> for res in responses:
-        ...     print(res.revised)
 
     :param apikey: str. Bareun API 키
     :param host: str. gRPC 서버 호스트, 로컬에 바른 서버 설치시 'localhost' 입력 (기본값: nlp.bareun.ai)
@@ -82,14 +74,16 @@ class Corrector:
         )
         self.client = BareunRevisionServiceClient(self.channel, apikey, self.host, self.port)
 
-    def correct_error(self, content: str, auto_split: bool = True, custom_domain: str = "") -> pb.CorrectErrorResponse:
+    def correct_error(self, content: str,
+                      custom_dicts: List[str] = [],
+                      config: Union[pb.RevisionConfig, None] = None) -> pb.CorrectErrorResponse:
         """
         맞춤법 교정 요청
 
         Args:
             content (str): 교정을 요청할 문장
-            auto_split (bool): 문장 자동 분리 여부
-            custom_domain (str): 커스텀 도메인 정보
+            custom_dicts (List[str]): 커스텀 도메인 정보
+            config Union[pb.RevisionConfig, None] : 요청 설정
 
         Returns:
             pb.CorrectErrorResponse: 교정 결과
@@ -97,72 +91,42 @@ class Corrector:
         request = pb.CorrectErrorRequest(
             document=lpb.Document(content=content, language="ko_KR"),
             encoding_type=lpb.EncodingType.UTF32,
-            auto_split_sentence=auto_split
         )
-        if custom_domain:
-            request.custom_domain = custom_domain
+        if len(custom_dicts):
+            request.custom_dict_names.extend(custom_dicts)
+        if config != None:
+            request.config.CopyFrom(config)
 
         return self.client.correct_error(request)
 
-    def correct_error_list(self, contents: List[str], auto_split: bool = False, custom_domain: str = "") -> List[pb.CorrectErrorResponse]:
-        """
-        여러 문장에 대한 맞춤법 교정 요청
-
-        Args:
-            contents (List[str]): 교정을 요청할 문장 리스트
-            auto_split (bool): 문장 자동 분리 여부
-            custom_domain (str): 커스텀 도메인 정보
-
-        Returns:
-            List[pb.CorrectErrorResponse]: 각 문장에 대한 pb.CorrectErrorResponse 객체의 리스트
-        """
-        results = []
-        for content in contents:
-            request = pb.CorrectErrorRequest(
-                document=lpb.Document(content=content, language="ko_KR"),
-                encoding_type=lpb.EncodingType.UTF32,
-                auto_split_sentence=auto_split
-            )
-            if custom_domain:
-                request.custom_domain = custom_domain
-            
-            response = self.client.correct_error(request)
-            results.append(response)
-        return results
-
-    def print_results(self, response: Union[pb.CorrectErrorResponse, List[pb.CorrectErrorResponse]], out: IO = stdout) -> None:
+    def print_results(self, res: pb.CorrectErrorResponse, out: IO = stdout) -> None:
         """
         교정 결과를 출력
 
         Args:
-            response (Union[pb.CorrectErrorResponse, List[pb.CorrectErrorResponse]]): 교정 결과 또는 교정 결과의 리스트
+            response pb.CorrectErrorResponse: 교정 결과 또는 교정 결과의 리스트
             out (IO): 출력 대상 (기본값: stdout)
         """
-        # 단일 객체를 리스트로 변환하여 처리
-        if not isinstance(response, list):
-            response = [response]
+        print(f'원문: {res.origin}', file=out)
+        print(f'교정: {res.revised}', file=out)
+ 
+        print("\n=== 교정된 문장들 ===", file=out)
+        
+        for sent in res.revised_sentences:
+            print(f" 원문: {sent.origin}", file=out)
+            print(f"교정문: {sent.revised}", file=out)
+    
+        for block in res.revised_blocks:
+            print(f'원문:{block.origin.content} offset:{block.origin.begin_offset}, length:{block.origin.length}', file=out)
+            print(f'대표 교정: {block.revised}', file=out)
+            for rev in block.revisions:
+                print(f' 교정: {rev.revised}, 카테고리:{rev.category}, 도움말 {res.helps[rev.help_id].comment}')
+                
+        for cleanup in res.whitespace_cleanup_ranges:
+            print(f'공백제거: offset:{cleanup.offset} length:{cleanup.length} position: {cleanup.position}')
+        
 
-        for result_index, single_response in enumerate(response, start=1):
-            print(f"=== 맞춤법 검사 결과 {result_index}===", file=out)
-            print(f"원문: {single_response.origin}", file=out)
-            print(f"교정문: {single_response.revised}", file=out)
-
-            if single_response.revised_sentences:
-                print("\n=== 교정된 문장들 ===", file=out)
-                for sentence in single_response.revised_sentences:
-                    print(f"[{result_index}] 원문: {sentence.origin}", file=out)
-                    print(f"    교정문: {sentence.revised}", file=out)
-                    if sentence.revised_blocks:
-                        print("    === 수정 블록 ===", file=out)
-                        for block_index, block in enumerate(sentence.revised_blocks, start=1):
-                            print(f"    {result_index}-{block_index} 원문: {block.origin.content}", file=out)
-                            print(f"        교정문: {block.revised}", file=out)
-                            if block.revisions:
-                                print("        수정 세부사항:", file=out)
-                                for rev in block.revisions:
-                                    print(f"          - {rev.comment} ({rev.category})", file=out)
-
-    def as_json(self, response: Union[pb.CorrectErrorResponse, List[pb.CorrectErrorResponse]]) -> Union[dict, List[dict]]:
+    def as_json(self, response: pb.CorrectErrorResponse) -> dict:
         """
         교정 결과를 JSON 형식으로 변환
 
@@ -172,12 +136,9 @@ class Corrector:
         Returns:
             Union[dict, List[dict]]: JSON 형식으로 변환된 결과
         """
-        if isinstance(response, list):
-            return [MessageToDict(resp, including_default_value_fields=True, use_integers_for_enums=False) for resp in response]
-        else:
-            return MessageToDict(response, including_default_value_fields=True, use_integers_for_enums=False)
+        return MessageToDict(response, True)
 
-    def as_json_str(self, response: Union[pb.CorrectErrorResponse, List[pb.CorrectErrorResponse]]) -> str:
+    def as_json_str(self, response: pb.CorrectErrorResponse) -> str:
         """
         교정 결과를 JSON 문자열로 변환
 
@@ -190,7 +151,7 @@ class Corrector:
         json_data = self.as_json(response)
         return json.dumps(json_data, ensure_ascii=False, indent=2)
 
-    def print_as_json(self, response: Union[pb.CorrectErrorResponse, List[pb.CorrectErrorResponse]], out: IO = stdout) -> None:
+    def print_as_json(self, response: pb.CorrectErrorResponse, out: IO = stdout) -> None:
         """
         교정 결과를 JSON 형식으로 출력
 

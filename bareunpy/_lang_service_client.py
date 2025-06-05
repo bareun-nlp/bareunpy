@@ -33,12 +33,15 @@ class BareunLanguageServiceClient:
     
     def _handle_grpc_error(self, e: grpc.RpcError):
         """gRPC 에러를 처리하는 메서드"""
-        server_message = e.details() if e.details() else "서버에서 추가 메시지를 제공하지 않았습니다."
-        if e.code() == grpc.StatusCode.PERMISSION_DENIED:
+        details = getattr(e, "details", lambda: None)()
+        code = getattr(e, "code", lambda: grpc.StatusCode.OK)()
+
+        server_message = details if details else "서버에서 추가 메시지를 제공하지 않았습니다."
+        if code == grpc.StatusCode.PERMISSION_DENIED:
             message = f'\n입력한 API KEY가 정확한지 확인해 주세요.\n > APIKEY: {self.apikey}\n서버 메시지: {server_message}'
-        elif e.code() == grpc.StatusCode.UNAVAILABLE:
+        elif code == grpc.StatusCode.UNAVAILABLE:
             message = f'\n서버에 연결할 수 없습니다. 입력한 서버주소 [{self.host}:{self.port}]가 정확한지 확인해 주세요.\n서버 메시지: {server_message}'
-        elif e.code() == grpc.StatusCode.INVALID_ARGUMENT:
+        elif code == grpc.StatusCode.INVALID_ARGUMENT:
             message = f'\n잘못된 요청이 서버로 전송되었습니다. 입력 데이터를 확인하세요.\n서버 메시지: {server_message}'
         else:
             message = f'알 수 없는 오류가 발생했습니다.\n서버 메시지: {server_message}'
@@ -46,10 +49,10 @@ class BareunLanguageServiceClient:
         raise Exception(message) from e
     
     def analyze_syntax(self, content: str,
-        domain: str = "",
+        custom_dicts: List[str] = [],
         auto_split=False,
         auto_spacing=True,
-        auto_jointing=False) -> pb.AnalyzeSyntaxResponse:
+        auto_jointing=True) -> pb.AnalyzeSyntaxResponse:
         """
         형태소 분석을 수행합니다.
 
@@ -74,8 +77,8 @@ class BareunLanguageServiceClient:
         req.auto_split_sentence = auto_split
         req.auto_spacing = auto_spacing
         req.auto_jointing = auto_jointing
-        if domain:
-            req.custom_domain = domain
+        req.custom_dict_names.extend(custom_dicts)
+
         try:
             res, c = self.stub.AnalyzeSyntax.with_call(
                 request=req, metadata=self.metadata)
@@ -88,9 +91,9 @@ class BareunLanguageServiceClient:
             raise e2
         
     def analyze_syntax_list(self, content: List[str],
-        domain: str = "",
+        custom_dicts: List[str] = [],
         auto_spacing=True,
-        auto_jointing=False) -> pb.AnalyzeSyntaxListResponse:
+        auto_jointing=True) -> pb.AnalyzeSyntaxListResponse:
         """
         형태소 분석을 수행하되, 입력된 문장 단위가 일치하도록 반환됩니다.
         문장 분할 기능을 사용하지 않습니다.
@@ -113,8 +116,8 @@ class BareunLanguageServiceClient:
         req.encoding_type = lpb.EncodingType.UTF32
         req.auto_spacing = auto_spacing
         req.auto_jointing = auto_jointing
-        if domain:
-            req.custom_domain = domain
+        req.custom_dict_names.extend(custom_dicts)
+
         try:
             res, c = self.stub.AnalyzeSyntaxList.with_call(
                 request=req, metadata=self.metadata)

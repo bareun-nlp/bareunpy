@@ -33,12 +33,14 @@ class BareunRevisionServiceClient:
 
     def _handle_grpc_error(self, e: grpc.RpcError):
         """gRPC 에러를 처리하는 메서드"""
-        server_message = e.details() if e.details() else "서버에서 추가 메시지를 제공하지 않았습니다."
-        if e.code() == grpc.StatusCode.PERMISSION_DENIED:
+        details = getattr(e, "details", lambda: None)()
+        code = getattr(e, "code", lambda: grpc.StatusCode.OK)()
+        server_message = details if details else "서버에서 추가 메시지를 제공하지 않았습니다."
+        if code == grpc.StatusCode.PERMISSION_DENIED:
             message = f'\n입력한 API KEY가 정확한지 확인해 주세요.\n > APIKEY: {self.apikey}\n서버 메시지: {server_message}'
-        elif e.code() == grpc.StatusCode.UNAVAILABLE:
+        elif code == grpc.StatusCode.UNAVAILABLE:
             message = f'\n서버에 연결할 수 없습니다. 입력한 서버주소 [{self.host}:{self.port}]를 확인하세요.\n서버 메시지: {server_message}'
-        elif e.code() == grpc.StatusCode.INVALID_ARGUMENT:
+        elif code == grpc.StatusCode.INVALID_ARGUMENT:
             message = f'\n잘못된 요청이 서버로 전송되었습니다. 입력 데이터를 확인하세요.\n서버 메시지: {server_message}'
         else:
             message = f'알 수 없는 오류가 발생했습니다.\n서버 메시지: {server_message}'
