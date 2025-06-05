@@ -1,1 +1,1 @@
-PYTHONPATH=bareunpy
+PYTHONPATH=bareunpy:.
