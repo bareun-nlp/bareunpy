@@ -164,24 +164,10 @@ API_KEY = "koba-ABCDEFG-1234567-LMNOPQR-7654321"  # <- 본인의 API KEY로 교�
 # Initialize Corrector
 corrector = Corrector(API_KEY)
 
-# Single sentence correction
+# sentence correction
 response = corrector.correct_error("영수 도 줄기가 얇어서 시들을 것 같은 꽃에물을 주었다.")
 print(f"Original: {response.origin}")
 print(f"Corrected: {response.revised}")
 corrector.print_results(response)
-
-# Multiple sentences correction
-responses = corrector.correct_error_list([
-    "어머니 께서 만들어주신김치찌게가너무맵다며동생이울어버렸다.",
-    "영수 도 줄기가 얇어서 시들을 것 같은 꽃에물을 주었다."
-])
-for res in responses:
-    print(f"Original: {res.origin}")
-    print(f"Corrected: {res.revised}")
-
-corrector.print_results(responses)
-
-# JSON output
-corrector.print_as_json(response)
 
 ```
