@@ -65,14 +65,7 @@ class Corrector:
         else:
             self.port = 5656
 
-        self.channel = grpc.insecure_channel(
-            f"{self.host}:{self.port}",
-            options=[
-                ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
-                ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
-            ]
-        )
-        self.client = BareunRevisionServiceClient(self.channel, apikey, self.host, self.port)
+        self.client = BareunRevisionServiceClient(apikey, self.host, self.port)
 
     def correct_error(self, content: str,
                       custom_dicts: List[str] = [],
