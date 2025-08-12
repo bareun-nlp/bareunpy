@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import json
 from sys import stdout
-from typing import IO, List, Any
+from typing import IO, List
 
 from google.protobuf.json_format import MessageToDict
 import grpc
-from bareunpy._lang_service_client import BareunLanguageServiceClient, MAX_MESSAGE_LENGTH
+from bareunpy._lang_service_client import BareunLanguageServiceClient
 from bareun.language_service_pb2 import TokenizeResponse, Segment, SegmentSentence, SegmentToken
 
 
@@ -198,26 +198,24 @@ class Tokenizer:
         if host:
             host = host.strip()
         if host == "" or host is None:
-            self.host = 'nlp.bareun.ai'
+            self.host = 'api.bareun.ai'
         else:
             self.host = host
 
         if port is not None:
             self.port = port
         else:
-            self.port = 5656
+            if self.host.lower().startswith('api.bareun.ai'):
+                self.port = 443
+            else:
+                self.port = 5656
 
         if apikey == None or len(apikey) == 0:
             raise ValueError("a apikey must be provided!")
         self.apikey = apikey
-        self.channel = grpc.insecure_channel(
-            f"{self.host}:{self.port}",
-            options=[
-                ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
-                ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
-            ])
-        self.client = BareunLanguageServiceClient(self.channel, apikey, host, port)
-    
+
+        self.client = BareunLanguageServiceClient(apikey, self.host, self.port)
+
     def _handle_grpc_error(self, e: grpc.RpcError):
         """gRPC 에러를 처리하는 메서드"""
         details = getattr(e, "details", lambda: None)()

@@ -1,6 +1,7 @@
 import grpc
 import bareun.revision_service_pb2 as pb
 import bareun.revision_service_pb2_grpc as rs_grpc
+from bareunpy._lang_service_client import CA_BUNDLE
 
 MAX_MESSAGE_LENGTH = 100 * 1024 * 1024
 
@@ -10,7 +11,7 @@ class BareunRevisionServiceClient:
     맞춤법 검사를 처리하는 클라이언트
     """
 
-    def __init__(self, channel, apikey: str, host: str, port: int):
+    def __init__(self, apikey: str, host: str, port: int):
         """
         RevisionServiceClient 초기화
 
@@ -19,17 +20,39 @@ class BareunRevisionServiceClient:
             host (str): gRPC 서버 주소
             port (int): gRPC 서버 포트
         """
-        self.channel = channel
         self.apikey = apikey
         self.host = host
         self.port = port
+        self.channel = self._create_secure_channel(host, port, ca_cert_pem=CA_BUNDLE)
         self.metadata = [
             ('api-key', self.apikey),
             ('user-agent', 'bareun-revision-client'),
         ]
-
-        
         self.stub = rs_grpc.RevisionServiceStub(self.channel)
+
+    def _create_secure_channel(self,
+            host: str,
+            port: int,
+            *,
+            ca_cert_pem: bytes = None
+        ) -> grpc.Channel:
+            """
+            gRPC 보안 채널을 생성합니다.
+            """
+            opts=[
+                ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
+                ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
+            ]
+            if host.lower().startswith("api.bareun.ai"):
+                creds = grpc.ssl_channel_credentials(root_certificates=ca_cert_pem)
+                return grpc.secure_channel(f"{host}:{port}",
+                                        creds,
+                                        options=opts)
+            else:
+                return grpc.insecure_channel(
+                    f"{host}:{port}",
+                    options=opts
+                )
 
     def _handle_grpc_error(self, e: grpc.RpcError):
         """gRPC 에러를 처리하는 메서드"""
