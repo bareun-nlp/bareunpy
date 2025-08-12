@@ -43,7 +43,7 @@ Operating System :: MacOS
 
 setuptools.setup(
     name="bareunpy",
-    version="1.7.1",
+    version="1.7.2",
     author="Gihyun YUN",
     author_email="gih2yun@baikal.ai",
     description="The bareun python API library",
