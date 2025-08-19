@@ -6,26 +6,26 @@ import pytest
 @pytest.fixture
 def tagger_instance():
     import bareunpy
-    ## FIXME change it nlp.bareun.ai
+    ## FIXME change it api.bareun.ai
     t = bareunpy.Tagger(apikey="koba-42CXULQ-SDPU6ZA-RQ6QPBQ-4BMZCOA",
-                        host="10.3.8.44",
-                        port=5656)
+                        host="api.bareun.ai",
+                        port=443)
     return t
 
 @pytest.fixture
 def tagger_error_host_instance():
     import bareunpy
     t = bareunpy.Tagger(apikey="koba-42CXULQ-SDPU6ZA-RQ6QPBQ-4BMZCOA",
-                        host="10.3.8.44:5656",
-                        port=5656)
+                        host="api.bareun.ai:443",
+                        port=443)
     return t
 
 @pytest.fixture
 def tagger_error_apikey_instance():
     import bareunpy
     t = bareunpy.Tagger(apikey="koba-42CXULQ-SDPU6ZA",
-                        host="10.3.8.44",
-                        port=5656)
+                        host="api.bareun.ai",
+                        port=443)
     return t
 
 @pytest.fixture
