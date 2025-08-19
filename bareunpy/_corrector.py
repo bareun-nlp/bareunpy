@@ -7,6 +7,7 @@ from google.protobuf.json_format import MessageToDict
 import bareun.revision_service_pb2 as pb
 import bareun.lang_common_pb2 as lpb
 from ._revision_service_client import BareunRevisionServiceClient
+from bareunpy._tagger import _resolve_port
 
 MAX_MESSAGE_LENGTH = 100 * 1024 * 1024
 
@@ -56,14 +57,11 @@ class Corrector:
         if apikey:
             apikey = apikey.strip()
         if host == "" or host is None:
-            self.host = 'nlp.bareun.ai'
+            self.host = 'api.bareun.ai'
         else:
-            self.host = host 
-        
-        if port is not None:
-            self.port = port
-        else:
-            self.port = 5656
+            self.host = host
+
+        self.port = _resolve_port(self.host, port)
 
         self.client = BareunRevisionServiceClient(apikey, self.host, self.port)
 

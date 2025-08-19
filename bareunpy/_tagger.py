@@ -9,6 +9,20 @@ from bareunpy._custom_dict import CustomDict
 from bareunpy._lang_service_client import BareunLanguageServiceClient
 from bareun.language_service_pb2 import AnalyzeSyntaxResponse, AnalyzeSyntaxListResponse, Morpheme, Sentence, Token
 
+def _resolve_port(host: str, port: int) -> int:
+    """
+    Resolve port number based on host.
+    :param host: Host name
+    :param port: Port number
+    :return: Resolved port number
+    """
+    if port is not None:
+        return port
+    else:
+        if host.lower().startswith('api.bareun.ai'):
+            return 443
+        else:
+            return 5656
 
 class Tagged:
     """
@@ -155,13 +169,7 @@ class Tagger:
         else:
             self.host = host
 
-        if port is not None:
-            self.port = port
-        else:
-            if self.host.lower().startswith('api.bareun.ai'):
-                self.port = 443
-            else:
-                self.port = 5656
+        self.port = _resolve_port(self.host, port)
         self.apikey = apikey
 
         if apikey == None or len(apikey) == 0:

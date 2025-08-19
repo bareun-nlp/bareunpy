@@ -7,7 +7,7 @@ from google.protobuf.json_format import MessageToDict
 import grpc
 from bareunpy._lang_service_client import BareunLanguageServiceClient
 from bareun.language_service_pb2 import TokenizeResponse, Segment, SegmentSentence, SegmentToken
-
+from bareunpy._tagger import _resolve_port
 
 class Tokenized:
     """
@@ -202,13 +202,7 @@ class Tokenizer:
         else:
             self.host = host
 
-        if port is not None:
-            self.port = port
-        else:
-            if self.host.lower().startswith('api.bareun.ai'):
-                self.port = 443
-            else:
-                self.port = 5656
+        self.port = _resolve_port(self.host, port)
 
         if apikey == None or len(apikey) == 0:
             raise ValueError("a apikey must be provided!")
