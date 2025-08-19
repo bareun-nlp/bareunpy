@@ -110,10 +110,10 @@ API_KEY = "koba-ABCDEFG-1234567-LMNOPQR-7654321" # <- 본인의 API KEY로 교�
 # If you have your own localhost bareun.
 tokenizer = Tokenizer(API_KEY, 'localhost')
 # or if you have your own bareun which is running on 10.8.3.211:15656.
-tokenizer = Tagger(API_KEY, '10.8.3.211', 15656)
+tokenizer = Tokenizer(API_KEY, '10.8.3.211', 15656)
 # If you don’t want to run your own Bareun server, you can use the official hosted endpoint.
 # Just provide your API key and point the client to `api.bareun.ai` on port `443`.
-tokenizer = Tagger(API_KEY, 'api.bareun.ai', 443)
+tokenizer = Tokenizer(API_KEY, 'api.bareun.ai', 443)
 
 # print results. 
 tokenized = tokenizer.tokenize_list(["안녕하세요.", "반가워요!"])
