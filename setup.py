@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import setuptools
+from bareunpy._version import version
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
@@ -43,7 +44,7 @@ Operating System :: MacOS
 
 setuptools.setup(
     name="bareunpy",
-    version="1.7.1",
+    version=version,
     author="Gihyun YUN",
     author_email="gih2yun@baikal.ai",
     description="The bareun python API library",

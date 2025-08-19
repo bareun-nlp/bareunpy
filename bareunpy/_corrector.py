@@ -7,6 +7,7 @@ from google.protobuf.json_format import MessageToDict
 import bareun.revision_service_pb2 as pb
 import bareun.lang_common_pb2 as lpb
 from ._revision_service_client import BareunRevisionServiceClient
+from bareunpy._tagger import _resolve_port
 
 MAX_MESSAGE_LENGTH = 100 * 1024 * 1024
 
@@ -56,23 +57,13 @@ class Corrector:
         if apikey:
             apikey = apikey.strip()
         if host == "" or host is None:
-            self.host = 'nlp.bareun.ai'
+            self.host = 'api.bareun.ai'
         else:
-            self.host = host 
-        
-        if port is not None:
-            self.port = port
-        else:
-            self.port = 5656
+            self.host = host
 
-        self.channel = grpc.insecure_channel(
-            f"{self.host}:{self.port}",
-            options=[
-                ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
-                ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
-            ]
-        )
-        self.client = BareunRevisionServiceClient(self.channel, apikey, self.host, self.port)
+        self.port = _resolve_port(self.host, port)
+
+        self.client = BareunRevisionServiceClient(apikey, self.host, self.port)
 
     def correct_error(self, content: str,
                       custom_dicts: List[str] = [],

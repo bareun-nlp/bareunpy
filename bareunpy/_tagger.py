@@ -1,14 +1,28 @@
 # -*- coding: utf-8 -*-
 import json
 from sys import stdout
-from typing import IO, List, Any, Union
+from typing import IO, List, Union
 
 from google.protobuf.json_format import MessageToDict
 import grpc
 from bareunpy._custom_dict import CustomDict
-from bareunpy._lang_service_client import BareunLanguageServiceClient, MAX_MESSAGE_LENGTH
+from bareunpy._lang_service_client import BareunLanguageServiceClient
 from bareun.language_service_pb2 import AnalyzeSyntaxResponse, AnalyzeSyntaxListResponse, Morpheme, Sentence, Token
 
+def _resolve_port(host: str, port: int) -> int:
+    """
+    Resolve port number based on host.
+    :param host: Host name
+    :param port: Port number
+    :return: Resolved port number
+    """
+    if port is not None:
+        return port
+    else:
+        if host.lower().startswith('api.bareun.ai'):
+            return 443
+        else:
+            return 5656
 
 class Tagged:
     """
@@ -151,27 +165,17 @@ class Tagger:
             host = host.strip()
 
         if host == "" or host is None:
-            self.host = 'nlp.bareun.ai'
+            self.host = 'api.bareun.ai'
         else:
             self.host = host
 
-        if port is not None:
-            self.port = port
-        else:
-            self.port = 5656
-
-        self.channel = grpc.insecure_channel(
-            f"{self.host}:{self.port}",
-            options=[
-                ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
-                ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
-            ])
+        self.port = _resolve_port(self.host, port)
         self.apikey = apikey
 
         if apikey == None or len(apikey) == 0:
             raise ValueError("an apikey must be provided!")
 
-        self.client = BareunLanguageServiceClient(self.channel, apikey, self.host, self.port)
+        self.client = BareunLanguageServiceClient(apikey, self.host, self.port)
 
         self.custom_dicts = custom_dicts
         self.internal_custom_dicts = {}
