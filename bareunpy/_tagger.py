@@ -197,8 +197,8 @@ class Tagger:
     @DeprecationWarning
     def set_domain(self, domain: str):
         """
-        Set domain of custom dict.
-        :param domain: domain name of custom dict
+        사용자 사전 이름을 추가합니다. (deprecated: set_custom_dicts 를 사용하세요)
+        :param domain: 사용자 사전 이름
         """
         if len(self.custom_dicts) == 0:
             self.custom_dicts = []
@@ -206,8 +206,8 @@ class Tagger:
 
     def set_custom_dicts(self, custom_dicts: List[str]):
         """
-        Set domain of custom dict.
-        :param domain: domain name of custom dict
+        사용자 사전 이름 목록을 설정합니다.
+        :param custom_dicts: 사용자 사전 이름 목록
         """
         if len(custom_dicts) > 0:
             self.custom_dicts = custom_dicts
@@ -222,7 +222,7 @@ class Tagger:
         if name in self.internal_custom_dicts:
             return self.internal_custom_dicts[name]
         else:
-            self.internal_custom_dicts[name] = CustomDict(self.apikey, name,  self.channel)
+            self.internal_custom_dicts[name] = CustomDict(self.apikey, name,  self.client.channel)
             return self.internal_custom_dicts[name]
 
     def tag(self, phrase: str, auto_split: bool = False, auto_spacing: bool = True, auto_jointing: bool = True) -> Tagged:
@@ -256,11 +256,10 @@ class Tagger:
 
     def taglist(self, phrase: List[str], auto_spacing: bool = True, auto_jointing: bool = True) -> Tagged:
         """
-        the array is not being split and the input value is being returned as-is.
-        :param phrase: array of string
-        :param auto_split(bool, optional): Whether to automatically perform sentence split
-        :param auto_spacing(bool, optional): Whether to automatically perform space insertion for typo correction
-        :param auto_jointing(bool, optional): Whether to automatically perform word joining for typo correction
+        문장 분할 없이 입력된 문장 단위 그대로 형태소 분석을 수행합니다.
+        :param phrase: 분석할 문장의 리스트
+        :param auto_spacing(bool, optional): 띄어쓰기 보정 기능 (기본값: True)
+        :param auto_jointing(bool, optional): 붙여쓰기 보정 기능 (기본값: True)
         :return: Tagged result instance
         """
         if len(phrase) == 0:

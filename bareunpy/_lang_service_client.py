@@ -193,10 +193,10 @@ class BareunLanguageServiceClient:
 
         Args:
             content (str): 형태소 분석할 원문, 여러 문장일 경우에 개행문자로 줄바꿈을 하면 됩니다.
-            domain (str, optional): 사용사 사전의 이름. 기본값은 "".
+            custom_dicts (list, optional): 사용자 사전의 이름. 기본값은 [].
             auto_split (bool, optional): 문장 자동 분리 여부, 기본값은 사용하지 않음.
             auto_spacing (bool, optional): 띄어쓰기 보정 기능, 기본값은 사용하도록 함.
-            auto_jointing (bool, optional): 붙여쓰기 보정 기능, 기본값은 사용하지 않음.
+            auto_jointing (bool, optional): 붙여쓰기 보정 기능, 기본값은 사용하도록 함.
 
         Raises:
             e: grpc.Error, 원격 호출시 예외가 발생할 수 있습니다.
@@ -205,7 +205,6 @@ class BareunLanguageServiceClient:
             pb.AnalyzeSyntaxResponse: 형태소 분석 결과
         """
         req = pb.AnalyzeSyntaxRequest()
-        # req.document = pb.Document()
         req.document.content = content
         req.document.language = "ko_KR"
         req.encoding_type = lpb.EncodingType.UTF32
@@ -235,7 +234,7 @@ class BareunLanguageServiceClient:
 
         Args:
             content (List[str]): 형태소 분석할 원문의 리스트
-            domain (str, optional): 사용사 사전의 이름. 기본값은 "".
+            custom_dicts (list, optional): 사용자 사전의 이름. 기본값은 [].
             auto_spacing (bool, optional): 띄어쓰기 보정 기능, 기본값은 사용하도록 함.
             auto_jointing (bool, optional): 붙여쓰기 보정 기능, 기본값은 사용하지 않음.
 
@@ -271,7 +270,6 @@ class BareunLanguageServiceClient:
 
         Args:
             content (str): 형태소 분석할 원문, 여러 문장일 경우에 개행문자로 줄바꿈을 하면 됩니다.
-            domain (str, optional): 사용사 사전의 이름. 기본값은 "".
             auto_split (bool, optional): 문장 자동 분리 여부, 기본값은 사용하지 않음.
 
         Raises:

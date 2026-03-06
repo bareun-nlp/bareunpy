@@ -73,7 +73,7 @@ class Corrector:
 
         Args:
             content (str): 교정을 요청할 문장
-            custom_dicts (List[str]): 커스텀 도메인 정보
+            custom_dicts (List[str]): 사용자 사전의 이름 목록
             config Union[pb.RevisionConfig, None] : 요청 설정
 
         Returns:
