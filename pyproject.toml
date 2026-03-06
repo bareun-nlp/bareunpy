@@ -34,6 +34,7 @@ grpcio = "^1.53.2"
 protobuf = "^3.19.6"
 googleapis-common-protos = "^1.56.0"
 bareun-apis = "^0.15.2"
+certifi = ">=2023.7.22"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^6.2.2"

@@ -2,5 +2,6 @@ grpcio==1.53.2
 googleapis-common-protos==1.56.0
 protobuf>=3.19.6
 bareun-apis==0.15.2
+certifi>=2023.7.22
 setuptools~=60.5.0  # 
 pytest>=7.2.1

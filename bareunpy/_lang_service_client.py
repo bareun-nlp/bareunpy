@@ -1,4 +1,6 @@
 import grpc
+import ssl
+import logging
 from typing import List
 
 import bareunpy
@@ -7,74 +9,115 @@ import bareun.language_service_pb2_grpc as ls
 import bareun.lang_common_pb2 as lpb
 
 MAX_MESSAGE_LENGTH = 100 * 1024 * 1024
-CA_BUNDLE = b"""-----BEGIN CERTIFICATE-----
-MIIGEzCCA/ugAwIBAgIQfVtRJrR2uhHbdBYLvFMNpzANBgkqhkiG9w0BAQwFADCB
-iDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCk5ldyBKZXJzZXkxFDASBgNVBAcTC0pl
-cnNleSBDaXR5MR4wHAYDVQQKExVUaGUgVVNFUlRSVVNUIE5ldHdvcmsxLjAsBgNV
-BAMTJVVTRVJUcnVzdCBSU0EgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkwHhcNMTgx
-MTAyMDAwMDAwWhcNMzAxMjMxMjM1OTU5WjCBjzELMAkGA1UEBhMCR0IxGzAZBgNV
-BAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEYMBYGA1UE
-ChMPU2VjdGlnbyBMaW1pdGVkMTcwNQYDVQQDEy5TZWN0aWdvIFJTQSBEb21haW4g
-VmFsaWRhdGlvbiBTZWN1cmUgU2VydmVyIENBMIIBIjANBgkqhkiG9w0BAQEFAAOC
-AQ8AMIIBCgKCAQEA1nMz1tc8INAA0hdFuNY+B6I/x0HuMjDJsGz99J/LEpgPLT+N
-TQEMgg8Xf2Iu6bhIefsWg06t1zIlk7cHv7lQP6lMw0Aq6Tn/2YHKHxYyQdqAJrkj
-eocgHuP/IJo8lURvh3UGkEC0MpMWCRAIIz7S3YcPb11RFGoKacVPAXJpz9OTTG0E
-oKMbgn6xmrntxZ7FN3ifmgg0+1YuWMQJDgZkW7w33PGfKGioVrCSo1yfu4iYCBsk
-Haswha6vsC6eep3BwEIc4gLw6uBK0u+QDrTBQBbwb4VCSmT3pDCg/r8uoydajotY
-uK3DGReEY+1vVv2Dy2A0xHS+5p3b4eTlygxfFQIDAQABo4IBbjCCAWowHwYDVR0j
-BBgwFoAUU3m/WqorSs9UgOHYm8Cd8rIDZsswHQYDVR0OBBYEFI2MXsRUrYrhd+mb
-+ZsF4bgBjWHhMA4GA1UdDwEB/wQEAwIBhjASBgNVHRMBAf8ECDAGAQH/AgEAMB0G
-A1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjAbBgNVHSAEFDASMAYGBFUdIAAw
-CAYGZ4EMAQIBMFAGA1UdHwRJMEcwRaBDoEGGP2h0dHA6Ly9jcmwudXNlcnRydXN0
-LmNvbS9VU0VSVHJ1c3RSU0FDZXJ0aWZpY2F0aW9uQXV0aG9yaXR5LmNybDB2Bggr
-BgEFBQcBAQRqMGgwPwYIKwYBBQUHMAKGM2h0dHA6Ly9jcnQudXNlcnRydXN0LmNv
-bS9VU0VSVHJ1c3RSU0FBZGRUcnVzdENBLmNydDAlBggrBgEFBQcwAYYZaHR0cDov
-L29jc3AudXNlcnRydXN0LmNvbTANBgkqhkiG9w0BAQwFAAOCAgEAMr9hvQ5Iw0/H
-ukdN+Jx4GQHcEx2Ab/zDcLRSmjEzmldS+zGea6TvVKqJjUAXaPgREHzSyrHxVYbH
-7rM2kYb2OVG/Rr8PoLq0935JxCo2F57kaDl6r5ROVm+yezu/Coa9zcV3HAO4OLGi
-H19+24rcRki2aArPsrW04jTkZ6k4Zgle0rj8nSg6F0AnwnJOKf0hPHzPE/uWLMUx
-RP0T7dWbqWlod3zu4f+k+TY4CFM5ooQ0nBnzvg6s1SQ36yOoeNDT5++SR2RiOSLv
-xvcRviKFxmZEJCaOEDKNyJOuB56DPi/Z+fVGjmO+wea03KbNIaiGCpXZLoUmGv38
-sbZXQm2V0TP2ORQGgkE49Y9Y3IBbpNV9lXj9p5v//cWoaasm56ekBYdbqbe4oyAL
-l6lFhd2zi+WJN44pDfwGF/Y4QA5C5BIG+3vzxhFoYt/jmPQT2BVPi7Fp2RBgvGQq
-6jG35LWjOhSbJuMLe/0CjraZwTiXWTb2qHSihrZe68Zk6s+go/lunrotEbaGmAhY
-LcmsJWTyXnW0OMGuf1pGg+pRyrbxmRE1a6Vqe8YAsOf4vmSyrcjC8azjUeqkk+B5
-yOGBQMkKW+ESPMFgKuOXwIlCypTPRpgSabuY0MLTDXJLR27lk8QyKGOHQ+SwMj4K
-00u/I5sUKUErmgQfky3xxzlIPK1aEn8=
------END CERTIFICATE-----
------BEGIN CERTIFICATE-----
-MIIFgTCCBGmgAwIBAgIQOXJEOvkit1HX02wQ3TE1lTANBgkqhkiG9w0BAQwFADB7
-MQswCQYDVQQGEwJHQjEbMBkGA1UECAwSR3JlYXRlciBNYW5jaGVzdGVyMRAwDgYD
-VQQHDAdTYWxmb3JkMRowGAYDVQQKDBFDb21vZG8gQ0EgTGltaXRlZDEhMB8GA1UE
-AwwYQUFBIENlcnRpZmljYXRlIFNlcnZpY2VzMB4XDTE5MDMxMjAwMDAwMFoXDTI4
-MTIzMTIzNTk1OVowgYgxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpOZXcgSmVyc2V5
-MRQwEgYDVQQHEwtKZXJzZXkgQ2l0eTEeMBwGA1UEChMVVGhlIFVTRVJUUlVTVCBO
-ZXR3b3JrMS4wLAYDVQQDEyVVU0VSVHJ1c3QgUlNBIENlcnRpZmljYXRpb24gQXV0
-aG9yaXR5MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAgBJlFzYOw9sI
-s9CsVw127c0n00ytUINh4qogTQktZAnczomfzD2p7PbPwdzx07HWezcoEStH2jnG
-vDoZtF+mvX2do2NCtnbyqTsrkfjib9DsFiCQCT7i6HTJGLSR1GJk23+jBvGIGGqQ
-Ijy8/hPwhxR79uQfjtTkUcYRZ0YIUcuGFFQ/vDP+fmyc/xadGL1RjjWmp2bIcmfb
-IWax1Jt4A8BQOujM8Ny8nkz+rwWWNR9XWrf/zvk9tyy29lTdyOcSOk2uTIq3XJq0
-tyA9yn8iNK5+O2hmAUTnAU5GU5szYPeUvlM3kHND8zLDU+/bqv50TmnHa4xgk97E
-xwzf4TKuzJM7UXiVZ4vuPVb+DNBpDxsP8yUmazNt925H+nND5X4OpWaxKXwyhGNV
-icQNwZNUMBkTrNN9N6frXTpsNVzbQdcS2qlJC9/YgIoJk2KOtWbPJYjNhLixP6Q5
-D9kCnusSTJV882sFqV4Wg8y4Z+LoE53MW4LTTLPtW//e5XOsIzstAL81VXQJSdhJ
-WBp/kjbmUZIO8yZ9HE0XvMnsQybQv0FfQKlERPSZ51eHnlAfV1SoPv10Yy+xUGUJ
-5lhCLkMaTLTwJUdZ+gQek9QmRkpQgbLevni3/GcV4clXhB4PY9bpYrrWX1Uu6lzG
-KAgEJTm4Diup8kyXHAc/DVL17e8vgg8CAwEAAaOB8jCB7zAfBgNVHSMEGDAWgBSg
-EQojPpbxB+zirynvgqV/0DCktDAdBgNVHQ4EFgQUU3m/WqorSs9UgOHYm8Cd8rID
-ZsswDgYDVR0PAQH/BAQDAgGGMA8GA1UdEwEB/wQFMAMBAf8wEQYDVR0gBAowCDAG
-BgRVHSAAMEMGA1UdHwQ8MDowOKA2oDSGMmh0dHA6Ly9jcmwuY29tb2RvY2EuY29t
-L0FBQUNlcnRpZmljYXRlU2VydmljZXMuY3JsMDQGCCsGAQUFBwEBBCgwJjAkBggr
-BgEFBQcwAYYYaHR0cDovL29jc3AuY29tb2RvY2EuY29tMA0GCSqGSIb3DQEBDAUA
-A4IBAQAYh1HcdCE9nIrgJ7cz0C7M7PDmy14R3iJvm3WOnnL+5Nb+qh+cli3vA0p+
-rvSNb3I8QzvAP+u431yqqcau8vzY7qN7Q/aGNnwU4M309z/+3ri0ivCRlv79Q2R+
-/czSAaF9ffgZGclCKxO/WIu6pKJmBHaIkU4MiRTOok3JMrO66BQavHHxW/BBC5gA
-CiIDEOUMsfnNkjcZ7Tvx5Dq2+UUTJnWvu6rvP3t3O9LEApE9GQDTF1w52z97GA1F
-zZOFli9d31kWTz9RvdVFGD/tSo7oBmF0Ixa1DVBzJ0RHfxBdiSprhTEUxOipakyA
-vGp4z7h/jnZymQyd/teRCBaho1+V
------END CERTIFICATE-----
-"""
+
+_logger = logging.getLogger(__name__)
+
+# 서버가 intermediate 인증서를 체인에 포함하지 않는 경우를 대비하여
+# api.bareun.ai의 intermediate CA를 런타임에 가져와 캐싱합니다.
+_cached_root_certs = None
+
+
+def _fetch_intermediate_certs(host: str, port: int = 443) -> bytes:
+    """서버의 leaf 인증서에서 AIA 확장을 읽어 intermediate CA를 자동으로 가져옵니다.
+
+    서버가 full chain을 보내지 않는 경우, leaf cert의 Authority Information Access(AIA)
+    확장에 있는 CA Issuers URL을 따라가서 intermediate 인증서를 다운로드합니다.
+    """
+    try:
+        from cryptography import x509
+        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives.serialization import Encoding
+        from cryptography.x509.oid import AuthorityInformationAccessOID
+        import urllib.request
+
+        # 검증 없이 서버의 leaf cert를 가져옴
+        pem = ssl.get_server_certificate((host, port))
+        cert = x509.load_pem_x509_certificate(pem.encode(), default_backend())
+
+        intermediates = b""
+        seen = set()
+        current_cert = cert
+
+        # AIA 체인을 따라가며 intermediate 인증서들을 수집 (최대 5단계)
+        for _ in range(5):
+            try:
+                aia = current_cert.extensions.get_extension_for_class(
+                    x509.AuthorityInformationAccess
+                )
+            except x509.ExtensionNotFound:
+                break
+
+            ca_url = None
+            for desc in aia.value:
+                if desc.access_method == AuthorityInformationAccessOID.CA_ISSUERS:
+                    ca_url = desc.access_location.value
+                    break
+            if not ca_url or ca_url in seen:
+                break
+            seen.add(ca_url)
+
+            try:
+                resp = urllib.request.urlopen(ca_url, timeout=10)
+                der_data = resp.read()
+            except Exception:
+                break
+
+            # DER → PEM 변환
+            try:
+                # DER 형식인지 확인
+                intermediate_cert = x509.load_der_x509_certificate(der_data, default_backend())
+            except Exception:
+                try:
+                    intermediate_cert = x509.load_pem_x509_certificate(der_data, default_backend())
+                except Exception:
+                    break
+
+            pem_bytes = intermediate_cert.public_bytes(encoding=Encoding.PEM)
+            intermediates += pem_bytes
+
+            # self-signed이면 루트 도달, 중지
+            if intermediate_cert.issuer == intermediate_cert.subject:
+                break
+            current_cert = intermediate_cert
+
+        return intermediates
+    except Exception as e:
+        _logger.debug("intermediate 인증서 자동 다운로드 실패: %s", e)
+        return b""
+
+
+def _get_root_certificates(host: str = "api.bareun.ai", port: int = 443) -> bytes:
+    """런타임에 최신 CA 인증서를 로드합니다.
+
+    1. certifi 패키지가 있으면 Mozilla CA 번들을 로드합니다.
+       없으면 gRPC 내장 루트 인증서를 사용합니다.
+    2. 서버가 intermediate 인증서를 체인에 포함하지 않는 경우를 대비하여
+       AIA 확장을 통해 intermediate CA를 자동으로 가져와 번들에 추가합니다.
+    결과는 모듈 수준에서 캐싱됩니다.
+    """
+    global _cached_root_certs
+    if _cached_root_certs is not None:
+        return _cached_root_certs
+
+    # 1) certifi 또는 gRPC 기본 CA 번들
+    root_certs = None
+    try:
+        import certifi
+        with open(certifi.where(), 'rb') as f:
+            root_certs = f.read()
+    except (ImportError, IOError):
+        pass
+
+    # 2) intermediate 인증서 자동 보충
+    intermediates = _fetch_intermediate_certs(host, port)
+    if intermediates:
+        if root_certs:
+            root_certs = root_certs + b"\n" + intermediates
+        else:
+            root_certs = intermediates
+
+    _cached_root_certs = root_certs
+    return _cached_root_certs
 
 class BareunLanguageServiceClient:
     """
@@ -97,14 +140,12 @@ class BareunLanguageServiceClient:
                 )
         self.host = host
         self.port = port
-        self.channel = self._create_secure_channel(host, port, ca_cert_pem=CA_BUNDLE)
+        self.channel = self._create_secure_channel(host, port)
         self.stub = ls.LanguageServiceStub(self.channel)
     
     def _create_secure_channel(self,
         host: str,
         port: int,
-        *,
-        ca_cert_pem: bytes = None
     ) -> grpc.Channel:
         """
         gRPC 보안 채널을 생성합니다.
@@ -114,7 +155,8 @@ class BareunLanguageServiceClient:
             ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
         ]
         if host.lower().startswith("api.bareun.ai"):
-            creds = grpc.ssl_channel_credentials(root_certificates=ca_cert_pem)
+            root_certs = _get_root_certificates(host, port)
+            creds = grpc.ssl_channel_credentials(root_certificates=root_certs)
             return grpc.secure_channel(f"{host}:{port}",
                                        creds,
                                        options=opts)
