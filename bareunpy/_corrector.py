@@ -43,7 +43,7 @@ class Corrector:
     :param port: int. gRPC 서버 포트 (기본값: 5656)
     """
 
-    def __init__(self, apikey: str, host: str = "", port: int = 5656):
+    def __init__(self, apikey: str, host: str = "", port: int = None):
         """
         Corrector 초기화
 

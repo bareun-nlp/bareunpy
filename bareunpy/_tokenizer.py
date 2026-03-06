@@ -193,7 +193,7 @@ class Tokenizer:
     :param port         : int. port  for bareun server
     """
 
-    def __init__(self, apikey:str, host: str = "", port: int = 5656):
+    def __init__(self, apikey:str, host: str = "", port: int = None):
 
         if host:
             host = host.strip()

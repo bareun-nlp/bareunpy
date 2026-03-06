@@ -159,7 +159,7 @@ class Tagger:
     :param custom_dicts : List[str]. custom dictionary names for analyzing request
     """
 
-    def __init__(self, apikey:str, host: str = "", port: int = 5656, custom_dicts: List[str] = []):
+    def __init__(self, apikey:str, host: str = "", port: int = None, custom_dicts: List[str] = []):
 
         if host:
             host = host.strip()
