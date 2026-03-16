@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bareunpy"
-version = "1.7.2"
+version = "1.7.3"
 description = "The bareun python library using grpc"
 authors = ["Gihyun YUN <gih2yun@baikal.ai>"]
 license = "BSD-3-Clause"
@@ -34,6 +34,8 @@ grpcio = "^1.53.2"
 protobuf = "^3.19.6"
 googleapis-common-protos = "^1.56.0"
 bareun-apis = "^0.15.2"
+certifi = ">=2023.7.22"
+cryptography = ">=3.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^6.2.2"

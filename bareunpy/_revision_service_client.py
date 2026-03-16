@@ -1,7 +1,8 @@
 import grpc
+import bareunpy
 import bareun.revision_service_pb2 as pb
 import bareun.revision_service_pb2_grpc as rs_grpc
-from bareunpy._lang_service_client import CA_BUNDLE
+from bareunpy._lang_service_client import _get_root_certificates
 
 MAX_MESSAGE_LENGTH = 100 * 1024 * 1024
 
@@ -23,18 +24,15 @@ class BareunRevisionServiceClient:
         self.apikey = apikey
         self.host = host
         self.port = port
-        self.channel = self._create_secure_channel(host, port, ca_cert_pem=CA_BUNDLE)
+        self.channel = self._create_secure_channel(host, port)
         self.metadata = [
             ('api-key', self.apikey),
-            ('user-agent', 'bareun-revision-client'),
         ]
         self.stub = rs_grpc.RevisionServiceStub(self.channel)
 
     def _create_secure_channel(self,
             host: str,
             port: int,
-            *,
-            ca_cert_pem: bytes = None
         ) -> grpc.Channel:
             """
             gRPC 보안 채널을 생성합니다.
@@ -42,9 +40,11 @@ class BareunRevisionServiceClient:
             opts=[
                 ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
                 ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
+                ('grpc.primary_user_agent', f'bareunpy/{bareunpy.version}'),
             ]
             if host.lower().startswith("api.bareun.ai"):
-                creds = grpc.ssl_channel_credentials(root_certificates=ca_cert_pem)
+                root_certs = _get_root_certificates(host, port)
+                creds = grpc.ssl_channel_credentials(root_certificates=root_certs)
                 return grpc.secure_channel(f"{host}:{port}",
                                         creds,
                                         options=opts)
