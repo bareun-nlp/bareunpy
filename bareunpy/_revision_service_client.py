@@ -1,4 +1,5 @@
 import grpc
+import bareunpy
 import bareun.revision_service_pb2 as pb
 import bareun.revision_service_pb2_grpc as rs_grpc
 from bareunpy._lang_service_client import _get_root_certificates
@@ -26,7 +27,6 @@ class BareunRevisionServiceClient:
         self.channel = self._create_secure_channel(host, port)
         self.metadata = [
             ('api-key', self.apikey),
-            ('user-agent', 'bareun-revision-client'),
         ]
         self.stub = rs_grpc.RevisionServiceStub(self.channel)
 
@@ -40,6 +40,7 @@ class BareunRevisionServiceClient:
             opts=[
                 ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
                 ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
+                ('grpc.primary_user_agent', f'bareunpy/{bareunpy.version}'),
             ]
             if host.lower().startswith("api.bareun.ai"):
                 root_certs = _get_root_certificates(host, port)

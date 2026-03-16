@@ -136,7 +136,6 @@ class BareunLanguageServiceClient:
         self.apikey = apikey
         self.metadata=(
                 ('api-key', self.apikey),
-                ('user-agent', f'bareunpy/{bareunpy.version}')
                 )
         self.host = host
         self.port = port
@@ -153,6 +152,7 @@ class BareunLanguageServiceClient:
         opts=[
             ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
             ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
+            ('grpc.primary_user_agent', f'bareunpy/{bareunpy.version}'),
         ]
         if host.lower().startswith("api.bareun.ai"):
             root_certs = _get_root_certificates(host, port)
