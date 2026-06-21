@@ -1,0 +1,28 @@
+name: Publish to PyPI
+
+# GitHub Release 를 publish 하면 패키지를 빌드해 PyPI 에 업로드한다.
+# PyPI Trusted Publishing(OIDC)을 사용하므로 API 토큰을 secret 으로 저장할 필요가 없다.
+# 사전 설정: PyPI 프로젝트에 이 저장소/워크플로를 trusted publisher 로 등록해야 한다.
+# https://docs.pypi.org/trusted-publishers/
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write  # Trusted Publishing(OIDC)에 필요
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
