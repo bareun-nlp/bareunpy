@@ -27,15 +27,14 @@ classifiers = [
     "Operating System :: Unix",
     "Operating System :: MacOS"
 ]
-# bareunpy 본체와, 현재 proto 에서 생성한 메시지/Connect 스텁(bareun) 패키지를 함께 배포한다.
+# bareunpy 패키지만 배포한다. 생성된 proto 스텁은 bareunpy/bareun/ 서브패키지에 포함된다.
 packages = [
     { include = "bareunpy" },
-    { include = "bareun" },
 ]
 # 생성물의 타입 스텁(.pyi)과 PEP 561 마커는 .py 가 아니라서 명시적으로 포함한다.
 include = [
-    "bareun/*.pyi",
-    "bareun/py.typed",
+    "bareunpy/bareun/*.pyi",
+    "bareunpy/bareun/py.typed",
     "bareunpy/py.typed",
 ]
 
@@ -59,17 +58,17 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 # 커버리지 기본 옵션. 생성 코드(*_pb2*.py)는 손수 작성 코드가 아니므로 제외한다.
-addopts = "--cov=bareunpy --cov=bareun --cov-report=term-missing --cov-config=pyproject.toml"
+addopts = "--cov=bareunpy --cov-report=term-missing --cov-config=pyproject.toml"
 
 [tool.coverage.run]
 branch = true
-source = ["bareunpy", "bareun"]
+source = ["bareunpy"]
 # protoc/buf 생성 코드는 커버리지 측정 대상에서 제외한다.
 # *_pb2.py, *_connect.py 는 모두 buf generate 산출물이지 손수 작성 코드가 아니다.
 omit = [
-    "bareun/*_pb2.py",
-    "bareun/*_pb2_grpc.py",
-    "bareun/*_connect.py",
+    "bareunpy/bareun/*_pb2.py",
+    "bareunpy/bareun/*_pb2_grpc.py",
+    "bareunpy/bareun/*_connect.py",
 ]
 
 [tool.coverage.report]

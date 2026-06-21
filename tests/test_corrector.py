@@ -13,7 +13,7 @@ import tempfile
 import pytest
 import bareunpy
 from bareunpy import Corrector
-import bareun.revision_service_pb2 as pb
+import bareunpy.bareun.revision_service_pb2 as pb
 
 
 def _api_key() -> str:
