@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import warnings
 from sys import stdout
 from typing import IO, List, Union
 
@@ -179,12 +180,17 @@ class Tagger:
         self.custom_dicts = custom_dicts
         self.internal_custom_dicts = {}
     
-    @DeprecationWarning
     def set_domain(self, domain: str):
+        """사용자 사전 이름을 추가합니다.
+
+        .. deprecated::
+            :meth:`set_custom_dicts` 를 사용하세요.
         """
-        사용자 사전 이름을 추가합니다. (deprecated: set_custom_dicts 를 사용하세요)
-        :param domain: 사용자 사전 이름
-        """
+        warnings.warn(
+            "set_domain() 은 deprecated 입니다. set_custom_dicts() 를 사용하세요.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if len(self.custom_dicts) == 0:
             self.custom_dicts = []
         self.custom_dicts.append(domain)
