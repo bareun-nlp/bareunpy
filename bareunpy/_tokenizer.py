@@ -4,7 +4,6 @@ from sys import stdout
 from typing import IO, List
 
 from google.protobuf.json_format import MessageToDict
-import grpc
 from bareunpy._lang_service_client import BareunLanguageServiceClient
 from bareun.language_service_pb2 import TokenizeResponse, Segment, SegmentSentence, SegmentToken
 from bareunpy._tagger import _resolve_port
@@ -210,46 +209,32 @@ class Tokenizer:
 
         self.client = BareunLanguageServiceClient(apikey, self.host, self.port)
 
-    def _handle_grpc_error(self, e: grpc.RpcError):
-        """gRPC 에러를 처리하는 메서드"""
-        details = getattr(e, "details", lambda: None)()
-        code = getattr(e, "code", lambda: grpc.StatusCode.OK)()
-        server_message = details if details else "서버에서 추가 메시지를 제공하지 않았습니다."
-        if code == grpc.StatusCode.PERMISSION_DENIED:
-            message = f'\n입력한 API KEY가 정확한지 확인해 주세요.\n > APIKEY: {self.apikey}\n서버 메시지: {server_message}'
-        elif code == grpc.StatusCode.UNAVAILABLE:
-            message = f'\n서버에 연결할 수 없습니다. 입력한 서버주소 [{self.host}:{self.port}]가 정확한지 확인해 주세요.\n서버 메시지: {server_message}'
-        else:
-            raise e
-        raise Exception(message) from e
-
-    def tokenize(self, phrase: str, auto_split: bool = False) -> Tokenized:
+    def tokenize(self, phrase: str, auto_split: bool = False, auto_spacing: bool = True) -> Tokenized:
+        """
+        문장을 분절합니다.
+        :param phrase: 분절할 문장
+        :param auto_split(bool, optional): 문장 자동 분리 여부 (deprecated, 기본값: False)
+        :param auto_spacing(bool, optional): 띄어쓰기 보정 기능 (기본값: True)
+        :return: Tokenized result instance
+        """
         if len(phrase) == 0:
             print("OOPS, no sentences.")
             return Tokenized('', TokenizeResponse())
-        try:
-            res = Tokenized(phrase,
-                        self.client.tokenize(phrase, auto_split))
-            return res
-        except grpc.RpcError as e:
-            self._handle_grpc_error(e)
+        # 에러 변환은 BareunLanguageServiceClient 내부에서 처리하므로 여기서 직접 호출한다.
+        return Tokenized(phrase, self.client.tokenize(phrase, auto_split, auto_spacing))
 
-    def tokenize_list(self, phrase: List[str]) -> Tokenized:
+    def tokenize_list(self, phrase: List[str], auto_spacing: bool = True) -> Tokenized:
         """
-        tag string array.
+        문장 단위 배열을 분절합니다.
         :param phrase: array of string
-        :return: Tagged result instance
+        :param auto_spacing(bool, optional): 띄어쓰기 보정 기능 (기본값: True)
+        :return: Tokenized result instance
         """
         if len(phrase) == 0:
             print("OOPS, no sentences.")
             return Tokenized('', TokenizeResponse())
         p = '\n'.join(phrase)
-        try:
-            res =  Tokenized(p,
-                        self.client.tokenize(p, auto_split=False))      
-            return res
-        except grpc.RpcError as e:
-            self._handle_grpc_error(e)
+        return Tokenized(p, self.client.tokenize(p, auto_split=False, auto_spacing=auto_spacing))
 
     def seg(self, phrase: str, flatten: bool = True, join: bool = False, detail: bool = False) -> List:
         """

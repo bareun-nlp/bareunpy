@@ -11,12 +11,7 @@ Intended Audience :: Science/Research
 Intended Audience :: Developers
 License :: OSI Approved :: BSD License
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.6
-Programming Language :: Python :: 3.7
-Programming Language :: Python :: 3.8
-Programming Language :: Python :: 3.9
 Programming Language :: Python :: 3.10
-Programming Language :: Python :: 3.11
 Programming Language :: Python :: 3.12
 Programming Language :: Python :: 3.13
 Programming Language :: Python :: 3 :: Only
@@ -59,7 +54,18 @@ setuptools.setup(
     },
     license='BSD',
     platform='Independent',
+    # bareunpy 본체 + 생성물(bareun) 패키지를 함께 배포한다.
     packages=setuptools.find_packages(),
+    # 생성물의 타입 스텁(.pyi)과 PEP 561 마커(py.typed)를 휠에 포함한다.
+    package_data={
+        'bareun': ['*.pyi', 'py.typed'],
+        'bareunpy': ['py.typed'],
+    },
+    include_package_data=True,
+    install_requires=[
+        'connectrpc>=0.10.1,<0.11',
+        'protobuf>=7.35,<8',
+    ],
     classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
-    python_requires='>=3.6',
+    python_requires='>=3.10',
 )

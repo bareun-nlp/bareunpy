@@ -1,12 +1,18 @@
+# -*- coding: utf-8 -*-
+"""사용자 사전(CustomDictionaryService) Connect RPC 클라이언트."""
+
 from typing import List
 
-import grpc
 from google.protobuf.empty_pb2 import Empty
 
 import bareun.custom_dict_pb2 as pb
-import bareun.custom_dict_pb2_grpc as cds
 import bareun.dict_common_pb2 as common
-
+from bareun.custom_dict_connect import CustomDictionaryServiceClientSync
+from bareunpy._lang_service_client import (
+    MAX_MESSAGE_LENGTH,
+    build_base_address,
+    build_metadata,
+)
 
 
 def build_dict_set(domain: str, name: str, dict_set: set) -> common.DictSet:
@@ -16,7 +22,7 @@ def build_dict_set(domain: str, name: str, dict_set: set) -> common.DictSet:
     Args:
         domain (str): 사용자 사전의 이름
         name (str): 사용자 사전에 대한 설명
-        dict_set (set): 사용자 사전에 들어가야 할 단어들의 잡합
+        dict_set (set): 사용자 사전에 들어가야 할 단어들의 집합
 
     Returns:
         common.DictSet: protobuf DictSet 메시지
@@ -29,72 +35,67 @@ def build_dict_set(domain: str, name: str, dict_set: set) -> common.DictSet:
     return ret
 
 
-MAX_MESSAGE_LENGTH = 100 * 1024 * 1024
-
-
 class CustomDictionaryServiceClient:
     """
     커스텀 사전을 생성, 조회, 업데이트, 삭제하는 클라이언트
-    
+
     The custom dictionary client which can create, update, list, delete your own one.
     """
 
-    def __init__(self, channel: grpc.Channel, apikey:str):
-        """사용자 사전을 관리하는 클라이언트 객체 생성자
+    def __init__(self, apikey: str, host: str, port: int):
+        """사용자 사전을 관리하는 클라이언트 객체 생성자.
+
+        과거에는 미리 만들어진 grpc 채널을 받았으나, Connect 전환 후에는 호스트/포트로
+        connectrpc 클라이언트를 직접 구성한다.
 
         Args:
-            remote (grpc.Channel): 미리 만들어 놓은 channel 객체
+            apikey (str): Bareun API 키
+            host (str): bareun 서버 호스트
+            port (int): bareun 서버 포트
         """
         super().__init__()
-        self.channel = channel
         self.apikey = apikey
-        self.metadata=(
-                ('api-key', self.apikey),
-                )
+        self.host = host
+        self.port = port
+        self.metadata = build_metadata(apikey)
+        self.stub = CustomDictionaryServiceClientSync(
+            build_base_address(host, port),
+            read_max_bytes=MAX_MESSAGE_LENGTH,
+        )
 
-        self.stub = cds.CustomDictionaryServiceStub(self.channel)
-
+    def close(self) -> None:
+        """내부 HTTP 클라이언트를 닫습니다(선택)."""
+        self.stub.close()
 
     def get_list(self) -> List[pb.CustomDictionaryMeta]:
         """사전 목록을 가져옵니다.
 
         Raises:
-            e: grpc.Error, 원격 호출시 예외가 발생할 수 있습니다.
+            ConnectError: 원격 호출시 예외가 발생할 수 있습니다.
 
         Returns:
-            List[pb.CustomDictionaryMeta]: 사전에 대한 정보들을 목록을 배열합니다.
+            List[pb.CustomDictionaryMeta]: 사전에 대한 정보들의 목록
         """
-        req = Empty()
-        try:
-            res, c = self.stub.GetCustomDictionaryList.with_call(
-                request=req, metadata=self.metadata)
-            return res.domain_dicts
-        except grpc.RpcError as e:
-            raise e
-
+        res = self.stub.get_custom_dictionary_list(Empty(), headers=self.metadata)
+        return res.domain_dicts
 
     def get(self, domain: str) -> pb.CustomDictionary:
         """
-        정의된 사용사 사전의 내용 전체를 가져온다.
+        정의된 사용자 사전의 내용 전체를 가져온다.
 
         Args:
-            domain (str): 사용자 사전이 이름
+            domain (str): 사용자 사전의 이름
 
         Raises:
-            e: grpc.Error, 원격 호출시 예외가 발생할 수 있습니다.
+            ConnectError: 원격 호출시 예외가 발생할 수 있습니다.
 
         Returns:
             pb.CustomDictionary: 사용자 사전 데이터 전체를 담고 있는 protobuf 메시지
         """
         req = pb.GetCustomDictionaryRequest()
         req.domain_name = domain
-        try:
-            res, c = self.stub.GetCustomDictionary.with_call(
-                request=req, metadata=self.metadata)
-            return res.dict
-        except grpc.RpcError as e:
-            raise e
-
+        res = self.stub.get_custom_dictionary(req, headers=self.metadata)
+        return res.dict
 
     def update(self, domain: str, np: set, cp: set, cp_caret: set, vv: set, va: set) -> bool:
         """ 사용자 사전을 갱신합니다.
@@ -108,12 +109,11 @@ class CustomDictionaryServiceClient:
             va (set): 형용사 단어 집합
 
         Raises:
-            e: grpc.Error, 원격 호출시 예외가 발생할 수 있습니다.
+            ConnectError: 원격 호출시 예외가 발생할 수 있습니다.
 
         Returns:
             bool: 정상적으로 갱신되면 참을 돌려줍니다.
         """
-        
         req = pb.UpdateCustomDictionaryRequest()
         req.domain_name = domain
 
@@ -126,23 +126,15 @@ class CustomDictionaryServiceClient:
         req.dict.cp_caret_set.CopyFrom(
             build_dict_set(domain, 'cp-caret-set', cp_caret))
 
-        try:
-            res, c = self.stub.UpdateCustomDictionary.with_call(
-                request=req, metadata=self.metadata)
-            return res.updated_domain_name == domain
-        except grpc.RpcError as e:
-            raise e
+        res = self.stub.update_custom_dictionary(req, headers=self.metadata)
+        return res.updated_domain_name == domain
 
-
-        """
-        :return: 삭제된 도메인의 이름들
-        """
     def remove_all(self) -> List[str]:
         """
         모든 커스텀 사전을 삭제한 다음 삭제한 사전의 이름을 돌려줍니다.
 
         Raises:
-            e: grpc.Error, 원격 호출시 예외가 발생할 수 있습니다.
+            ConnectError: 원격 호출시 예외가 발생할 수 있습니다.
 
         Returns:
             List[str]: 삭제한 사전의 이름
@@ -150,26 +142,17 @@ class CustomDictionaryServiceClient:
         req = pb.RemoveCustomDictionariesRequest()
         req.all = True
 
-        try:
-            res, c = self.stub.RemoveCustomDictionaries.with_call(
-                request=req, metadata=self.metadata)
-            return res.deleted_domain_names.keys()
-        except grpc.RpcError as e:
-            raise e
+        res = self.stub.remove_custom_dictionaries(req, headers=self.metadata)
+        return res.deleted_domain_names.keys()
 
-        """
-        지정한 도메인의 커스텀 사전을 삭제한다.
-        :param domains: 
-        :return: 
-        """
     def remove(self, domains: List[str]) -> List[str]:
-        """ 지정한 도메인의 사용지 사전을 삭제한 다음 삭제한 사전의 목록을 반환합니다.
+        """ 지정한 도메인의 사용자 사전을 삭제한 다음 삭제한 사전의 목록을 반환합니다.
 
         Args:
             domains (List[str]): 삭제할 커스텀 사전의 이름들
 
         Raises:
-            e: grpc.Error, 원격 호출시 예외가 발생할 수 있습니다.
+            ConnectError: 원격 호출시 예외가 발생할 수 있습니다.
 
         Returns:
             List[str]: 정상 삭제된 도메인의 이름 목록을 돌려줍니다.
@@ -177,9 +160,5 @@ class CustomDictionaryServiceClient:
         req = pb.RemoveCustomDictionariesRequest()
         req.domain_names.extend(domains)
         req.all = False
-        try:
-            res, c = self.stub.RemoveCustomDictionaries.with_call(
-                request=req, metadata=self.metadata)
-            return res.deleted_domain_names.keys()
-        except grpc.RpcError as e:
-            raise e
+        res = self.stub.remove_custom_dictionaries(req, headers=self.metadata)
+        return res.deleted_domain_names.keys()

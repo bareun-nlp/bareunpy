@@ -1,89 +1,92 @@
-import grpc
-import bareunpy
-import bareun.revision_service_pb2 as pb
-import bareun.revision_service_pb2_grpc as rs_grpc
-from bareunpy._lang_service_client import _get_root_certificates
+# -*- coding: utf-8 -*-
+"""맞춤법 교정(RevisionService) Connect RPC 클라이언트.
 
-MAX_MESSAGE_LENGTH = 100 * 1024 * 1024
+``CorrectError``(단발 교정)와 ``StreamCorrectError``(server-streaming 실시간 교정)를
+공식 Connect RPC 라이브러리(`connectrpc`)로 호출한다.
+"""
+
+from typing import Iterator
+
+from connectrpc.errors import ConnectError
+
+import bareun.revision_service_pb2 as pb
+from bareun.revision_service_connect import RevisionServiceClientSync
+from bareunpy._lang_service_client import (
+    MAX_MESSAGE_LENGTH,
+    build_base_address,
+    build_metadata,
+    BareunLanguageServiceClient,
+)
 
 
 class BareunRevisionServiceClient:
-    """
-    맞춤법 검사를 처리하는 클라이언트
+    """맞춤법 교정을 처리하는 클라이언트.
+
+    api-key 는 매 호출마다 ``api-key`` 요청 헤더로 전달한다. 에러 변환 로직은
+    :class:`BareunLanguageServiceClient` 와 동일하므로 그 메서드를 재사용한다.
     """
 
     def __init__(self, apikey: str, host: str, port: int):
-        """
-        RevisionServiceClient 초기화
+        """RevisionServiceClient 초기화.
 
         Args:
             apikey (str): API 키
-            host (str): gRPC 서버 주소
-            port (int): gRPC 서버 포트
+            host (str): bareun 서버 주소
+            port (int): bareun 서버 포트
         """
         self.apikey = apikey
         self.host = host
         self.port = port
-        self.channel = self._create_secure_channel(host, port)
-        self.metadata = [
-            ('api-key', self.apikey),
-        ]
-        self.stub = rs_grpc.RevisionServiceStub(self.channel)
+        self.metadata = build_metadata(apikey)
+        self.stub = RevisionServiceClientSync(
+            build_base_address(host, port),
+            read_max_bytes=MAX_MESSAGE_LENGTH,
+        )
 
-    def _create_secure_channel(self,
-            host: str,
-            port: int,
-        ) -> grpc.Channel:
-            """
-            gRPC 보안 채널을 생성합니다.
-            """
-            opts=[
-                ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
-                ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
-                ('grpc.primary_user_agent', f'bareunpy/{bareunpy.version}'),
-            ]
-            if host.lower().startswith("api.bareun.ai"):
-                root_certs = _get_root_certificates(host, port)
-                creds = grpc.ssl_channel_credentials(root_certificates=root_certs)
-                return grpc.secure_channel(f"{host}:{port}",
-                                        creds,
-                                        options=opts)
-            else:
-                return grpc.insecure_channel(
-                    f"{host}:{port}",
-                    options=opts
-                )
+    def close(self) -> None:
+        """내부 HTTP 클라이언트를 닫습니다(선택). 닫은 뒤에는 호출할 수 없습니다."""
+        self.stub.close()
 
-    def _handle_grpc_error(self, e: grpc.RpcError):
-        """gRPC 에러를 처리하는 메서드"""
-        details = getattr(e, "details", lambda: None)()
-        code = getattr(e, "code", lambda: grpc.StatusCode.OK)()
-        server_message = details if details else "서버에서 추가 메시지를 제공하지 않았습니다."
-        if code == grpc.StatusCode.PERMISSION_DENIED:
-            message = f'\n입력한 API KEY가 정확한지 확인해 주세요.\n > APIKEY: {self.apikey}\n서버 메시지: {server_message}'
-        elif code == grpc.StatusCode.UNAVAILABLE:
-            message = f'\n서버에 연결할 수 없습니다. 입력한 서버주소 [{self.host}:{self.port}]를 확인하세요.\n서버 메시지: {server_message}'
-        elif code == grpc.StatusCode.INVALID_ARGUMENT:
-            message = f'\n잘못된 요청이 서버로 전송되었습니다. 입력 데이터를 확인하세요.\n서버 메시지: {server_message}'
-        else:
-            message = f'알 수 없는 오류가 발생했습니다.\n서버 메시지: {server_message}'
-            raise e
-        raise Exception(message) from e
+    # 에러 변환 규칙은 LanguageService 와 완전히 동일하므로 중복 구현하지 않고 재사용한다.
+    _handle_connect_error = BareunLanguageServiceClient._handle_connect_error
 
     def correct_error(self, request: pb.CorrectErrorRequest) -> pb.CorrectErrorResponse:
-        """
-        맞춤법 교정을 위한 gRPC 호출
+        """맞춤법 교정을 위한 단발(unary) Connect 호출.
 
         Args:
-            request (pb.CorrectErrorRequest): gRPC 요청 메시지
+            request (pb.CorrectErrorRequest): 교정 요청 메시지
+
+        Raises:
+            Exception: 원격 호출시 예외가 발생할 수 있습니다.
 
         Returns:
-            pb.CorrectErrorResponse: gRPC 응답 메시지
+            pb.CorrectErrorResponse: 교정 응답 메시지
         """
         try:
-            response, call = self.stub.CorrectError.with_call(
-                request=request, metadata=self.metadata
-            )
-            return response
-        except grpc.RpcError as e:
-            self._handle_grpc_error(e)
+            return self.stub.correct_error(request, headers=self.metadata)
+        except ConnectError as e:
+            self._handle_connect_error(e)
+
+    def stream_correct_error(
+        self, request: pb.StreamCorrectErrorRequest
+    ) -> Iterator[pb.StreamCorrectErrorResponse]:
+        """맞춤법 교정을 server-streaming 방식으로 호출합니다.
+
+        하나의 요청을 보내고, 서버가 교정 결과를 여러 개의 응답으로 나눠 보냅니다.
+        반환된 이터레이터를 소비할 때 실제 네트워크 스트림이 진행되며, 스트림 도중
+        발생한 오류는 사용자 친화적인 메시지로 변환되어 전파됩니다.
+
+        Args:
+            request (pb.StreamCorrectErrorRequest): 스트리밍 교정 요청 메시지
+
+        Yields:
+            pb.StreamCorrectErrorResponse: 스트리밍 교정 응답(oneof: first/cancelled/post/progress)
+
+        Raises:
+            Exception: 원격 호출시 예외가 발생할 수 있습니다.
+        """
+        try:
+            for resp in self.stub.stream_correct_error(request, headers=self.metadata):
+                yield resp
+        except ConnectError as e:
+            self._handle_connect_error(e)
