@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 #
-# gen_proto.sh — 현재 bareun protos 에서 bareunpy 의 `bareun/` 패키지를 재생성한다.
+# gen_proto.sh — 현재 bareun protos 에서 bareunpy 의 `bareunpy/bareun/` 서브패키지를 재생성한다.
 #
 # bareunpy 는 메시지(*_pb2)와 공식 Connect 스텁(*_connect.py)을 패키지에 동봉한다(=vendoring).
 # proto 가 바뀌면 이 스크립트로 다시 생성해 커밋한다.
+#
+# 생성 결과 위치: bareunpy/bareun/ (bareunpy 패키지의 서브패키지)
+# proto package 이름이 bareun 이므로 buf 는 <out>/bareun/ 아래에 파일을 만든다.
+# out: bareunpy 로 두면 최종 경로가 bareunpy/bareun/ 이 된다.
 #
 # 사전 준비:
 #   1) buf 설치 (https://buf.build)
@@ -38,21 +42,26 @@ PATHS=(
 )
 
 # buf 의 --path 는 CWD 기준으로 해석되므로 protos 디렉토리에서 실행한다.
-# 커밋된 buf.gen.yaml 은 out: . (상대) 이지만, protos 디렉토리에서 실행하면 out 이 protos 를
-# 가리키게 되므로, out 을 bareunpy 루트(ROOT, 절대경로)로 치환한 임시 템플릿을 만들어 사용한다.
+# buf.gen.yaml 의 out: bareunpy 는 상대 경로이므로, protos 디렉토리에서 실행하면
+# $PROTOS/bareunpy/ 를 가리킨다. 따라서 임시 템플릿에서 이 경로를
+# $ROOT/bareunpy (bareunpy 저장소 루트 하위, 절대 경로)로 치환한다.
 TMP_TEMPLATE="$(mktemp -t bareunpy-buf-gen.XXXXXX.yaml)"
 trap 'rm -f "$TMP_TEMPLATE"' EXIT
-sed "s#^\( *out: \)\.#\1$ROOT#" "$ROOT/buf.gen.yaml" > "$TMP_TEMPLATE"
+sed "s#^\( *out: \)bareunpy#\1$ROOT/bareunpy#" "$ROOT/buf.gen.yaml" > "$TMP_TEMPLATE"
 
 ARGS=()
 for p in "${PATHS[@]}"; do
   ARGS+=(--path "$p")
 done
 
-echo "generating bareun/ stubs from: $PROTOS"
+echo "generating bareunpy/bareun/ stubs from: $PROTOS"
 ( cd "$PROTOS" && buf generate . --template "$TMP_TEMPLATE" "${ARGS[@]}" )
 
-# 생성된 패키지가 import 가능하도록 __init__.py / py.typed 를 보장한다.
-touch "$ROOT/bareun/__init__.py" "$ROOT/bareun/py.typed"
+# 생성된 서브패키지가 import 가능하도록 __init__.py / py.typed 를 보장한다.
+# __init__.py 는 sys.modules 별칭 등록 로직이 들어 있어 덮어쓰지 않는다.
+if [ ! -f "$ROOT/bareunpy/bareun/__init__.py" ]; then
+  echo "WARNING: bareunpy/bareun/__init__.py 가 없습니다. 수동으로 추가하세요." >&2
+fi
+touch "$ROOT/bareunpy/bareun/py.typed"
 
-echo "done. 'bareun/' 패키지가 갱신되었습니다. git diff 로 변경을 확인하세요."
+echo "done. 'bareunpy/bareun/' 패키지가 갱신되었습니다. git diff 로 변경을 확인하세요."

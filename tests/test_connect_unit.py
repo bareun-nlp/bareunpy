@@ -28,11 +28,11 @@ from connectrpc.client import ConnectClientSync
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 
-import bareun.language_service_pb2 as lpb2
-import bareun.lang_common_pb2 as lcpb
-import bareun.revision_service_pb2 as rpb
-import bareun.custom_dict_pb2 as cdpb
-import bareun.dict_common_pb2 as dcpb
+import bareunpy.bareun.language_service_pb2 as lpb2
+import bareunpy.bareun.lang_common_pb2 as lcpb
+import bareunpy.bareun.revision_service_pb2 as rpb
+import bareunpy.bareun.custom_dict_pb2 as cdpb
+import bareunpy.bareun.dict_common_pb2 as dcpb
 
 APIKEY = "koba-TESTKEY"
 HOST = "localhost"

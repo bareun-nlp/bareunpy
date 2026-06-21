@@ -7,7 +7,7 @@ from typing import IO, List, Union
 from google.protobuf.json_format import MessageToDict
 from bareunpy._custom_dict import CustomDict
 from bareunpy._lang_service_client import BareunLanguageServiceClient
-from bareun.language_service_pb2 import AnalyzeSyntaxResponse, AnalyzeSyntaxListResponse, Morpheme, Sentence, Token
+from bareunpy.bareun.language_service_pb2 import AnalyzeSyntaxResponse, AnalyzeSyntaxListResponse, Morpheme, Sentence, Token
 
 def _resolve_port(host: str, port: int) -> int:
     """

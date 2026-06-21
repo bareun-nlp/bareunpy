@@ -16,9 +16,9 @@ from bareunpy._version import version
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 
-import bareun.language_service_pb2 as pb
-import bareun.lang_common_pb2 as lpb
-from bareun.language_service_connect import LanguageServiceClientSync
+import bareunpy.bareun.language_service_pb2 as pb
+import bareunpy.bareun.lang_common_pb2 as lpb
+from bareunpy.bareun.language_service_connect import LanguageServiceClientSync
 
 # Connect/HTTP 응답 본문 크기 제한. grpc 시절 100MB 제한과 동일한 의미로 둔다.
 # connectrpc 의 read_max_bytes 에 그대로 전달한다.

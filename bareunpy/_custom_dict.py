@@ -2,8 +2,8 @@
 
 from typing import List
 from ._custom_dict_client import CustomDictionaryServiceClient
-from bareun.custom_dict_pb2 import CustomDictionary
-from bareun.dict_common_pb2 import DictSet
+from bareunpy.bareun.custom_dict_pb2 import CustomDictionary
+from bareunpy.bareun.dict_common_pb2 import DictSet
 
 
 def read_dic_file(fn: str) -> set:

@@ -1,4 +1,4 @@
-# bareunpy 의 `bareun/` 패키지(메시지 *_pb2 + 타입스텁 *_pb2.pyi + Connect 스텁 *_connect.py)를
+# bareunpy 의 `bareunpy/bareun/` 서브패키지(메시지 *_pb2 + 타입스텁 *_pb2.pyi + Connect 스텁 *_connect.py)를
 # 재생성하기 위한 buf 템플릿이다. tools/gen_proto.sh 가 이 템플릿으로 buf generate 를 실행한다.
 #
 # - protocolbuffers/python : *_pb2.py        (메시지 클래스)
@@ -8,11 +8,14 @@
 # 공식 connect-python(github.com/connectrpc/connect-python)의 buf 원격 플러그인을 사용한다.
 # protoc 35(gencode 7.35)로 생성하므로 런타임 protobuf 는 7.35+(<8) 이어야 한다(pyproject 참고).
 # bareun 모노레포(../bareun/protos)의 protoc 35 / protobuf 7.35 툴체인과 정렬한다.
+#
+# out: bareunpy 로 설정하면 proto package 이름(bareun)을 고려해 bareunpy/bareun/ 에 생성된다.
+# gen_proto.sh 는 이 값을 절대 경로(bareunpy 저장소 루트 하위 bareunpy/)로 교체한다.
 version: v2
 plugins:
   - remote: buf.build/protocolbuffers/python:v35.1
-    out: .
+    out: bareunpy
   - remote: buf.build/protocolbuffers/pyi:v35.1
-    out: .
+    out: bareunpy
   - remote: buf.build/connectrpc/python:v0.10.1
-    out: .
+    out: bareunpy

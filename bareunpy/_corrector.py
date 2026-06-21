@@ -4,8 +4,8 @@ from sys import stdout
 from typing import IO, Iterator, List, Union
 from google.protobuf.json_format import MessageToDict
 
-import bareun.revision_service_pb2 as pb
-import bareun.lang_common_pb2 as lpb
+import bareunpy.bareun.revision_service_pb2 as pb
+import bareunpy.bareun.lang_common_pb2 as lpb
 from ._revision_service_client import BareunRevisionServiceClient
 from bareunpy._tagger import _resolve_port
 

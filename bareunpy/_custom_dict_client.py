@@ -5,9 +5,9 @@ from typing import List
 
 from google.protobuf.empty_pb2 import Empty
 
-import bareun.custom_dict_pb2 as pb
-import bareun.dict_common_pb2 as common
-from bareun.custom_dict_connect import CustomDictionaryServiceClientSync
+import bareunpy.bareun.custom_dict_pb2 as pb
+import bareunpy.bareun.dict_common_pb2 as common
+from bareunpy.bareun.custom_dict_connect import CustomDictionaryServiceClientSync
 from bareunpy._lang_service_client import (
     MAX_MESSAGE_LENGTH,
     build_base_address,

@@ -9,8 +9,8 @@ from typing import Iterator
 
 from connectrpc.errors import ConnectError
 
-import bareun.revision_service_pb2 as pb
-from bareun.revision_service_connect import RevisionServiceClientSync
+import bareunpy.bareun.revision_service_pb2 as pb
+from bareunpy.bareun.revision_service_connect import RevisionServiceClientSync
 from bareunpy._lang_service_client import (
     MAX_MESSAGE_LENGTH,
     build_base_address,

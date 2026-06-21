@@ -5,7 +5,7 @@ from typing import IO, List
 
 from google.protobuf.json_format import MessageToDict
 from bareunpy._lang_service_client import BareunLanguageServiceClient
-from bareun.language_service_pb2 import TokenizeResponse, Segment, SegmentSentence, SegmentToken
+from bareunpy.bareun.language_service_pb2 import TokenizeResponse, Segment, SegmentSentence, SegmentToken
 from bareunpy._tagger import _resolve_port
 
 class Tokenized:
