@@ -12,6 +12,11 @@
 pip3 install bareunpy
 ```
 
+> **요구사항**: Python 3.10 이상.
+> 서버와의 통신은 공식 [Connect RPC](https://connectrpc.com/) 파이썬 라이브러리
+> (`connectrpc`, [connect-python](https://github.com/connectrpc/connect-python)) 위에서 동작합니다.
+> (2.0.0 부터 기존 gRPC 직접 연결에서 Connect RPC 로 전환되었습니다.)
+
 ## API KEY 발급
 
 1. https://bareun.ai/ 에 접속하여 회원가입 후 이메일 인증을 완료하면 자동 발급됩니다.
@@ -185,6 +190,34 @@ print(f"교정문: {response.revised}")
 
 # 상세 결과 출력
 corrector.print_results(response)
+```
+
+### 실시간 교정 (Streaming)
+
+`correct_error_stream()` 은 교정 결과를 한 번에 받지 않고, 서버가 보내는 대로
+여러 개의 응답으로 나눠 받는 server-streaming 방식입니다. AI 기반 교정처럼 결과가
+점진적으로 확정되는 경우에 유용합니다.
+
+```python
+from bareunpy import Corrector
+
+corrector = Corrector(API_KEY)
+
+for res in corrector.correct_error_stream("영수 도 줄기가 얇어서 시들을 것 같다."):
+    # 각 응답은 res(oneof) 로 다음 중 하나를 담습니다:
+    #  - first    : 첫 번째 기본 교정 결과
+    #  - progress : AI 가 추가 검토 중인 항목의 진행 상태
+    #  - post     : 추가 검토가 끝나 확정된 교정 결과
+    #  - cancelled: 이전에 제안한 교정이 취소됨
+    kind = res.WhichOneof("res")
+    if kind == "first":
+        print("교정문:", res.first.revised)
+    elif kind == "progress":
+        print("진행중:", res.progress.thinking_msg)
+    elif kind == "post":
+        print("확정:", res.post.revision.revised)
+    elif kind == "cancelled":
+        print("취소:", res.cancelled.thinking_id)
 ```
 
 ---

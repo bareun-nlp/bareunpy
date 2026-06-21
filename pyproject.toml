@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "bareunpy"
-version = "1.7.3"
-description = "The bareun python library using grpc"
+version = "2.0.0"
+description = "The bareun python library using connect-rpc"
 authors = ["Gihyun YUN <gih2yun@baikal.ai>"]
 license = "BSD-3-Clause"
 readme = "README.md"
@@ -27,18 +27,30 @@ classifiers = [
     "Operating System :: Unix",
     "Operating System :: MacOS"
 ]
+# bareunpy 본체와, 현재 proto 에서 생성한 메시지/Connect 스텁(bareun) 패키지를 함께 배포한다.
+packages = [
+    { include = "bareunpy" },
+    { include = "bareun" },
+]
+# 생성물의 타입 스텁(.pyi)과 PEP 561 마커는 .py 가 아니라서 명시적으로 포함한다.
+include = [
+    "bareun/*.pyi",
+    "bareun/py.typed",
+    "bareunpy/py.typed",
+]
 
 [tool.poetry.dependencies]
-python = "^3.6"
-grpcio = "^1.53.2"
-protobuf = "^3.19.6"
-googleapis-common-protos = "^1.56.0"
-bareun-apis = "^0.15.2"
-certifi = ">=2023.7.22"
-cryptography = ">=3.0"
+python = ">=3.10,<4.0"
+# 공식 Connect RPC 라이브러리(github.com/connectrpc/connect-python). server-streaming 지원.
+# HTTP 전송 계층 pyqwest 는 connectrpc 가 의존성으로 가져온다.
+# 아직 1.0 이전 베타라 minor 사이 호환이 깨질 수 있어 0.10.x 로 핀한다.
+connectrpc = ">=0.10.1,<0.11"
+# 생성된 *_pb2 는 protoc 35 gencode(7.35) 이므로 런타임 protobuf 7.35+(<8) 가 필요하다.
+# bareun 모노레포(../bareun/protos)의 protoc 35 / protobuf 7.35 툴체인과 정렬한다.
+protobuf = ">=7.35,<8"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^6.2.2"
+pytest = ">=7.2.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -4,7 +4,6 @@ from sys import stdout
 from typing import IO, List, Union
 
 from google.protobuf.json_format import MessageToDict
-import grpc
 from bareunpy._custom_dict import CustomDict
 from bareunpy._lang_service_client import BareunLanguageServiceClient
 from bareun.language_service_pb2 import AnalyzeSyntaxResponse, AnalyzeSyntaxListResponse, Morpheme, Sentence, Token
@@ -180,20 +179,6 @@ class Tagger:
         self.custom_dicts = custom_dicts
         self.internal_custom_dicts = {}
     
-    def _handle_grpc_error(self, e: grpc.RpcError):
-        """gRPC 에러를 처리하는 메서드"""
-        details = getattr(e, "details", lambda: None)()
-        code = getattr(e, "code", lambda: grpc.StatusCode.OK)()
-
-        server_message = details if details else "서버에서 추가 메시지를 제공하지 않았습니다."
-        if code == grpc.StatusCode.PERMISSION_DENIED:
-            message = f'\n입력한 API KEY가 정확한지 확인해 주세요.\n > APIKEY: {self.apikey}\n서버 메시지: {server_message}'
-        elif code == grpc.StatusCode.UNAVAILABLE:
-            message = f'\n서버에 연결할 수 없습니다. 입력한 서버주소 [{self.host}:{self.port}]가 정확한지 확인해 주세요.\n서버 메시지: {server_message}'
-        else:
-            raise e
-        raise Exception(message) from e
-
     @DeprecationWarning
     def set_domain(self, domain: str):
         """
@@ -222,18 +207,16 @@ class Tagger:
         if name in self.internal_custom_dicts:
             return self.internal_custom_dicts[name]
         else:
-            self.internal_custom_dicts[name] = CustomDict(self.apikey, name,  self.client.channel)
+            self.internal_custom_dicts[name] = CustomDict(self.apikey, name, self.host, self.port)
             return self.internal_custom_dicts[name]
 
     def tag(self, phrase: str, auto_split: bool = False, auto_spacing: bool = True, auto_jointing: bool = True) -> Tagged:
         if len(phrase) == 0:
             print("OOPS, no sentences.")
             return Tagged('', AnalyzeSyntaxResponse())
-        try:
-            res = self.client.analyze_syntax(phrase, self.custom_dicts, auto_split=auto_split, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
-            return Tagged(phrase, res)
-        except grpc.RpcError as e:
-            self._handle_grpc_error(e)
+        # 에러 변환은 BareunLanguageServiceClient 내부에서 처리하므로 여기서 직접 호출한다.
+        res = self.client.analyze_syntax(phrase, self.custom_dicts, auto_split=auto_split, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
+        return Tagged(phrase, res)
 
     def tags(self, phrase: List[str], auto_split: bool = False, auto_spacing: bool = True, auto_jointing: bool = True) -> Tagged:
         """
@@ -248,11 +231,8 @@ class Tagger:
             print("OOPS, no sentences.")
             return Tagged('', AnalyzeSyntaxResponse())
         p = '\n'.join(phrase)
-        try:
-            res = self.client.analyze_syntax(p, self.custom_dicts, auto_split=auto_split, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
-            return Tagged(p, res)
-        except grpc.RpcError as e:
-            self._handle_grpc_error(e)
+        res = self.client.analyze_syntax(p, self.custom_dicts, auto_split=auto_split, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
+        return Tagged(p, res)
 
     def taglist(self, phrase: List[str], auto_spacing: bool = True, auto_jointing: bool = True) -> Tagged:
         """
@@ -265,11 +245,8 @@ class Tagger:
         if len(phrase) == 0:
             print("OOPS, no sentences.")
             return Tagged('', AnalyzeSyntaxListResponse())
-        try:
-            res = self.client.analyze_syntax_list(phrase, self.custom_dicts, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
-            return Tagged(phrase, res)
-        except grpc.RpcError as e:
-            self._handle_grpc_error(e)
+        res = self.client.analyze_syntax_list(phrase, self.custom_dicts, auto_spacing=auto_spacing, auto_jointing=auto_jointing)
+        return Tagged(phrase, res)
 
     def pos(self, phrase: str, flatten: bool = True, join: bool = False, detail: bool = False) -> List:
         """

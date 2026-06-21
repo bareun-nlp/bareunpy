@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from typing import List
-import grpc
 from ._custom_dict_client import CustomDictionaryServiceClient
 from bareun.custom_dict_pb2 import CustomDictionary
 from bareun.dict_common_pb2 import DictSet
 
 
-def read_dic_file(fn :str) -> set:
+def read_dic_file(fn: str) -> set:
     """
     사용자 사전의 파일을 읽어들입니다.
 
@@ -45,6 +44,7 @@ def pb_map_to_set(ds: DictSet) -> set:
         ret.add(k)
     return ret
 
+
 class CustomDict():
     """
     사용자 사전을 쉽게 사용하도록 해주는 래퍼(wrapper).
@@ -54,10 +54,10 @@ class CustomDict():
     .. code-block:: python
         :emphasize-lines: 1
         >>> import bareunpy as brn
-        >>> tagger = brn.Tagger()
+        >>> tagger = brn.Tagger(apikey="koba-YOURKEY")
         >>> cd = tagger.custom_dict("law")
         >>> # or
-        >>> cd = brn.CustomDict("law", "localhost", 5656)
+        >>> cd = brn.CustomDict("koba-YOURKEY", "law", "localhost", 5656)
         >>> cd.read_cp_set_from_file("my_np_set.txt")
         >>> cd.copy_cp_set(set(['새단어', '코로나19', 'K방역']))
         >>> cd.read_cp_caret_set_from_file('my_cp_caret.txt')
@@ -70,13 +70,15 @@ class CustomDict():
         >>> # cd2.save(dir="my_dir")
     """
 
-    def __init__(self, apikey:str, domain: str, channel: grpc.Channel):
+    def __init__(self, apikey: str, domain: str, host: str, port: int):
         """
         사용자 사전 래퍼(wrapper)의 생성자
 
         Args:
+            apikey (str): Bareun API 키
             domain (str): 사용자 사전의 이름, 반드시 지정되어야 합니다.
-            channel(grpc.Channel): 원격에 연결할 정보
+            host (str): bareun 서버 호스트
+            port (int): bareun 서버 포트
         Raises:
             ValueError: 사용자 사전의 이름이 없으면 에러를 발생시킵니다.
         """
@@ -84,7 +86,7 @@ class CustomDict():
         if domain is None:
             raise ValueError("domain name must be specified.")
 
-        self.stub = CustomDictionaryServiceClient(channel, apikey)
+        self.stub = CustomDictionaryServiceClient(apikey, host, port)
         self.cp_set = set()
         self.np_set = set()
         self.cp_caret_set = set()
@@ -196,7 +198,7 @@ class CustomDict():
         복합명사 사전을 바이칼 NLP 서버에 갱신합니다.
 
         Raises:
-            e: grpc.Error, 원격 호출시 예외가 발생할 수 있습니다.
+            ConnecpyException: 원격 호출시 예외가 발생할 수 있습니다.
 
         Returns:
             bool: 갱신이 성공하면 참을 돌려줍니다.
@@ -214,38 +216,35 @@ class CustomDict():
         가져온 결과는 현재 설정된 사전의 내용을 반영하지 않습니다.
 
         Raises:
-            e: grpc.Error, 원격 호출시 예외가 발생할 수 있습니다.
+            ConnecpyException: 원격 호출시 예외가 발생할 수 있습니다.
 
         Returns:
             pb.CustomDictionary: 사용자 사전 데이터 전체를 담고 있는 protobuf 메시지
         """
         return self.stub.get(self.domain)
 
-
     def load(self):
         """
-        서버에 저정되어 있는 사용자 사전을 모두 가져옵니다.
+        서버에 저장되어 있는 사용자 사전을 모두 가져옵니다.
         """
         try:
             d = self.stub.get(self.domain)
             self.np_set = pb_map_to_set(d.np_set)
             self.cp_caret_set = pb_map_to_set(d.cp_caret_set)
             self.cp_set = pb_map_to_set(d.cp_set)
-        except Exception as e:
+        except Exception:
             pass
-
 
     def clear(self) -> List[str]:
         """
         사용자 사전의 내용을 삭제합니다.
 
         Raises:
-            e: grpc.Error, 원격 호출시 예외가 발생할 수 있습니다.
+            ConnecpyException: 원격 호출시 예외가 발생할 수 있습니다.
 
         Returns:
             List[str]: 삭제한 사용자 사전의 이름
         """
-
         self.np_set.clear()
         self.cp_set.clear()
         self.cp_caret_set.clear()
