@@ -6,6 +6,15 @@
 
 ---
 
+## 2.0 변경사항
+
+- **Connect RPC 전환**: `grpcio` 의존성 제거. 공식 [`connectrpc`](https://github.com/connectrpc/connect-python) 라이브러리로 교체
+- **경량화**: 의존성 2개(`connectrpc`, `protobuf`)만 필요 — 기존 `grpcio` / `connecpy` 설치 불필요
+- **버그 수정**: 스트리밍 응답 처리, 빈 입력 처리 안정성 개선, 에러 메시지 한글화
+- Python 3.10+ 지원 유지, 기존 API와 호환
+
+---
+
 ## 설치 (Installation)
 
 ```shell
