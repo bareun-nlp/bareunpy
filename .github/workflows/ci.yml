@@ -1,0 +1,50 @@
+name: CI
+
+# push/PR 마다 오프라인 단위 테스트와 패키지 빌드를 검증한다.
+# 통합 테스트(tests/test_tagger.py, test_tokenizer.py)는 실서버·키가 필요하므로
+# 기본 실행에서 제외된다(tests/conftest.py: BAREUN_RUN_INTEGRATION 환경변수로만 활성화).
+on:
+  push:
+    branches: ["main", "canary"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # NOTE: 의존성 pyqwest(connectrpc 의 HTTP 전송)는 0.6.2 기준 cp310/cp312/cp313
+        # 휠만 제공하고 cp311 휠이 없다. 따라서 3.11 은 매트릭스에서 제외한다.
+        python-version: ["3.10", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install package and test deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install .
+          pip install pytest
+      - name: Run offline unit tests
+        run: pytest tests/ -v
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/*
