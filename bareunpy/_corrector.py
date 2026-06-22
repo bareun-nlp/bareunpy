@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 import json
 from sys import stdout
-from typing import IO, Iterator, List, Union
+from typing import IO, Iterator, List, Optional, Union
 from google.protobuf.json_format import MessageToDict
 
 import bareunpy.bareun.revision_service_pb2 as pb
 import bareunpy.bareun.lang_common_pb2 as lpb
 from ._revision_service_client import BareunRevisionServiceClient
 from bareunpy._tagger import _resolve_port
-
-MAX_MESSAGE_LENGTH = 100 * 1024 * 1024
 
 
 class Corrector:
@@ -48,7 +46,7 @@ class Corrector:
     :param port: int. 서버 포트 (기본값: api.bareun.ai 는 443, 그 외는 5656)
     """
 
-    def __init__(self, apikey: str, host: str = "", port: int = None):
+    def __init__(self, apikey: str, host: str = "", port: Optional[int] = None):
         """
         Corrector 초기화
 
@@ -75,7 +73,7 @@ class Corrector:
         self.client = BareunRevisionServiceClient(apikey, self.host, self.port)
 
     def correct_error(self, content: str,
-                      custom_dicts: List[str] = [],
+                      custom_dicts: Optional[List[str]] = None,
                       config: Union[pb.RevisionConfig, None] = None) -> pb.CorrectErrorResponse:
         """
         맞춤법 교정 요청 (단발 호출)
@@ -92,7 +90,7 @@ class Corrector:
             document=lpb.Document(content=content, language="ko_KR"),
             encoding_type=lpb.EncodingType.UTF32,
         )
-        if len(custom_dicts):
+        if custom_dicts:
             request.custom_dict_names.extend(custom_dicts)
         if config is not None:
             request.config.CopyFrom(config)
@@ -100,7 +98,7 @@ class Corrector:
         return self.client.correct_error(request)
 
     def correct_error_stream(self, content: str,
-                             custom_dicts: List[str] = [],
+                             custom_dicts: Optional[List[str]] = None,
                              config: Union[pb.RevisionConfig, None] = None,
                              req_id: int = 0) -> Iterator[pb.StreamCorrectErrorResponse]:
         """
@@ -131,7 +129,7 @@ class Corrector:
         # req_id 가 0 이면 보내지 않아도 서버가 생성한다(proto 주석 참고).
         if req_id:
             request.req_id = req_id
-        if len(custom_dicts):
+        if custom_dicts:
             request.custom_dict_names.extend(custom_dicts)
         if config is not None:
             request.config.CopyFrom(config)

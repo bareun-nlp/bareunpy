@@ -143,7 +143,7 @@ class CustomDictionaryServiceClient:
         req.all = True
 
         res = self.stub.remove_custom_dictionaries(req, headers=self.metadata)
-        return res.deleted_domain_names.keys()
+        return list(res.deleted_domain_names.keys())
 
     def remove(self, domains: List[str]) -> List[str]:
         """ 지정한 도메인의 사용자 사전을 삭제한 다음 삭제한 사전의 목록을 반환합니다.
@@ -161,4 +161,4 @@ class CustomDictionaryServiceClient:
         req.domain_names.extend(domains)
         req.all = False
         res = self.stub.remove_custom_dictionaries(req, headers=self.metadata)
-        return res.deleted_domain_names.keys()
+        return list(res.deleted_domain_names.keys())

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 from sys import stdout
-from typing import IO, List
+from typing import IO, List, Optional
 
 from google.protobuf.json_format import MessageToDict
 from bareunpy._lang_service_client import BareunLanguageServiceClient
@@ -153,7 +153,7 @@ class Tokenized:
                 if m.hint == 'M']
 
     def postpositions(self) -> List:
-        """감탄사를 추출한다."""
+        """조사를 추출한다."""
         return [m.text.content for s in self.r.sentences
                 for token in s.tokens
                 for m in token.segments
@@ -192,7 +192,7 @@ class Tokenizer:
     :param port         : int. port  for bareun server
     """
 
-    def __init__(self, apikey:str, host: str = "", port: int = None):
+    def __init__(self, apikey: str, host: str = "", port: Optional[int] = None):
 
         if host:
             host = host.strip()

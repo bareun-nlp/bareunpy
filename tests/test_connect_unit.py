@@ -165,15 +165,18 @@ def test_tagger_empty_phrase_returns_empty():
 
 
 def test_tagger_taglist(monkeypatch):
-    t = Tagger(apikey=APIKEY, host=HOST, port=PORT)
-    monkeypatch.setattr(
-        t.client.stub, "analyze_syntax_list",
-        lambda request, headers=None, timeout_ms=None: lpb2.AnalyzeSyntaxListResponse(
-            sentences=_analyze_response().sentences
-        ),
-    )
+    t = Tagger(apikey=APIKEY, host=HOST, port=PORT, custom_dicts=["law"])
+    captured = {}
+
+    def fake_analyze_list(request, headers=None, timeout_ms=None):
+        captured["req"] = request
+        return lpb2.AnalyzeSyntaxListResponse(sentences=_analyze_response().sentences)
+
+    monkeypatch.setattr(t.client.stub, "analyze_syntax_list", fake_analyze_list)
     tagged = t.taglist(["오늘은 먹다"])
     assert tagged.morphs() == ["오늘", "은", "먹", "다"]
+    # custom_dicts 가 analyze_syntax_list 요청에 포함되는지 확인
+    assert list(captured["req"].custom_dict_names) == ["law"]
 
 
 def test_tokenizer_seg_and_extractors(monkeypatch):
@@ -491,13 +494,19 @@ def test_tagger_default_host():
 def test_tagger_set_domain_and_custom_dicts(monkeypatch):
     """set_domain(), set_custom_dicts() 가 정상 동작한다."""
     t = Tagger(apikey=APIKEY, host=HOST, port=PORT)
-    monkeypatch.setattr(
-        t.client.stub, "analyze_syntax",
-        lambda request, headers=None, timeout_ms=None: _analyze_response(),
-    )
+    captured = {}
+
+    def fake_analyze(request, headers=None, timeout_ms=None):
+        captured["req"] = request
+        return _analyze_response()
+
+    monkeypatch.setattr(t.client.stub, "analyze_syntax", fake_analyze)
     # set_domain: 한 항목 추가
     t.set_domain("law")
     assert "law" in t.custom_dicts
+    # custom_dicts 가 요청에 포함되는지 확인 (if custom_dicts: 분기 커버)
+    t.tag("오늘은 먹다")
+    assert list(captured["req"].custom_dict_names) == ["law"]
     # set_custom_dicts: 교체
     t.set_custom_dicts(["news", "medical"])
     assert t.custom_dicts == ["news", "medical"]
@@ -949,13 +958,13 @@ def test_corrector_stream_with_custom_dicts_and_config(monkeypatch):
 
 
 def test_custom_dict_load_exception(monkeypatch):
-    """load() 에서 예외가 발생하면 조용히 무시한다(lines 235-236 except 절)."""
+    """load() 에서 ConnectError 가 발생하면 조용히 무시한다."""
     cd = CustomDict(APIKEY, "law", HOST, PORT)
 
     def raise_error(req, headers=None, timeout_ms=None):
-        raise Exception("server error")
+        raise ConnectError(Code.UNAVAILABLE, "server error")
 
     monkeypatch.setattr(cd.stub.stub, "get_custom_dictionary", raise_error)
-    # 예외가 전파되지 않아야 한다
+    # ConnectError 는 전파되지 않아야 한다
     cd.load()
     assert len(cd.np_set) == 0

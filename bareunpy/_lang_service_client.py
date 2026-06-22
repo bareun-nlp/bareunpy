@@ -11,6 +11,7 @@
 """
 
 import logging
+from typing import List, NoReturn, Optional
 
 from bareunpy._version import version
 from connectrpc.code import Code
@@ -25,6 +26,33 @@ from bareunpy.bareun.language_service_connect import LanguageServiceClientSync
 MAX_MESSAGE_LENGTH = 100 * 1024 * 1024
 
 _logger = logging.getLogger(__name__)
+
+
+def handle_connect_error(e: ConnectError, *, apikey: str, host: str, port: int) -> Exception:
+    """ConnectError를 재해석해 던질 예외 객체를 반환합니다.
+
+    알려진 오류 코드는 한국어 안내 메시지를 담은 ``Exception`` 으로 감싸 반환하고,
+    알 수 없는 코드는 원본 ``ConnectError`` 를 그대로 반환합니다.
+    호출자가 ``raise handle_connect_error(...) from e`` 로 던집니다.
+
+    Args:
+        e (ConnectError): connectrpc 가 던진 예외
+        apikey (str): 오류 메시지에 표시할 API 키
+        host (str): 오류 메시지에 표시할 서버 호스트
+        port (int): 오류 메시지에 표시할 서버 포트
+
+    Returns:
+        Exception: 재해석된 예외(또는 원본 ConnectError)
+    """
+    code = e.code
+    server_message = e.message if e.message else "서버에서 추가 메시지를 제공하지 않았습니다."
+    if code in (Code.PERMISSION_DENIED, Code.UNAUTHENTICATED):
+        return Exception(f'\n입력한 API KEY가 정확한지 확인해 주세요.\n > APIKEY: {apikey}\n서버 메시지: {server_message}')
+    if code == Code.UNAVAILABLE:
+        return Exception(f'\n서버에 연결할 수 없습니다. 입력한 서버주소 [{host}:{port}]가 정확한지 확인해 주세요.\n서버 메시지: {server_message}')
+    if code == Code.INVALID_ARGUMENT:
+        return Exception(f'\n잘못된 요청이 서버로 전송되었습니다. 입력 데이터를 확인하세요.\n서버 메시지: {server_message}')
+    return e
 
 
 def is_secure_host(host: str) -> bool:
@@ -58,7 +86,7 @@ def build_base_address(host: str, port: int) -> str:
     return f"{scheme}://{host}:{port}"
 
 
-def build_metadata(apikey: str) -> dict:
+def build_metadata(apikey: str) -> dict[str, str]:
     """모든 요청에 공통으로 붙일 헤더(메타데이터)를 만듭니다.
 
     - ``api-key`` : 인증 키
@@ -105,44 +133,22 @@ class BareunLanguageServiceClient:
         """내부 HTTP 클라이언트를 닫습니다(선택). 닫은 뒤에는 호출할 수 없습니다."""
         self.stub.close()
 
-    def _handle_connect_error(self, e: ConnectError):
-        """Connect 에러를 사용자 친화적인 메시지로 변환합니다.
-
-        인증/연결/입력오류는 한국어 안내 메시지로 바꿔 ``Exception`` 으로 다시 던지고,
-        그 외 코드는 원본 ``ConnectError`` 를 그대로 전파한다.
-
-        Args:
-            e (ConnectError): connectrpc 가 던진 예외
-
-        Raises:
-            Exception: 안내 메시지를 담은 예외(인증/연결/입력오류)
-            ConnectError: 그 외의 코드는 원본을 그대로 전파
-        """
-        code = e.code
-        server_message = e.message if e.message else "서버에서 추가 메시지를 제공하지 않았습니다."
-        if code in (Code.PERMISSION_DENIED, Code.UNAUTHENTICATED):
-            message = f'\n입력한 API KEY가 정확한지 확인해 주세요.\n > APIKEY: {self.apikey}\n서버 메시지: {server_message}'
-        elif code == Code.UNAVAILABLE:
-            message = f'\n서버에 연결할 수 없습니다. 입력한 서버주소 [{self.host}:{self.port}]가 정확한지 확인해 주세요.\n서버 메시지: {server_message}'
-        elif code == Code.INVALID_ARGUMENT:
-            message = f'\n잘못된 요청이 서버로 전송되었습니다. 입력 데이터를 확인하세요.\n서버 메시지: {server_message}'
-        else:
-            raise e
-        raise Exception(message) from e
+    def _handle_connect_error(self, e: ConnectError) -> NoReturn:
+        raise handle_connect_error(e, apikey=self.apikey, host=self.host, port=self.port) from e
 
     def analyze_syntax(self, content: str,
-        custom_dicts=[],
-        auto_split=False,
-        auto_spacing=True,
-        auto_jointing=True) -> pb.AnalyzeSyntaxResponse:
+        custom_dicts: Optional[List[str]] = None,
+        auto_split: bool = False,
+        auto_spacing: bool = True,
+        auto_jointing: bool = True) -> pb.AnalyzeSyntaxResponse:
         """형태소 분석을 수행합니다.
 
         Args:
             content (str): 형태소 분석할 원문, 여러 문장일 경우에 개행문자로 줄바꿈을 하면 됩니다.
-            custom_dicts (list, optional): 사용자 사전의 이름. 기본값은 [].
-            auto_split (bool, optional): 문장 자동 분리 여부, 기본값은 사용하지 않음.
-            auto_spacing (bool, optional): 띄어쓰기 보정 기능, 기본값은 사용하도록 함.
-            auto_jointing (bool, optional): 붙여쓰기 보정 기능, 기본값은 사용하도록 함.
+            custom_dicts (Optional[List[str]]): 사용자 사전의 이름 목록. 기본값은 None(사용 안 함).
+            auto_split (bool): 문장 자동 분리 여부, 기본값은 사용하지 않음.
+            auto_spacing (bool): 띄어쓰기 보정 기능, 기본값은 사용하도록 함.
+            auto_jointing (bool): 붙여쓰기 보정 기능, 기본값은 사용하도록 함.
 
         Raises:
             Exception: 원격 호출시 예외가 발생할 수 있습니다.
@@ -157,26 +163,27 @@ class BareunLanguageServiceClient:
         req.auto_split_sentence = auto_split
         req.auto_spacing = auto_spacing
         req.auto_jointing = auto_jointing
-        req.custom_dict_names.extend(custom_dicts)
+        if custom_dicts:
+            req.custom_dict_names.extend(custom_dicts)
 
         try:
             return self.stub.analyze_syntax(req, headers=self.metadata)
         except ConnectError as e:
             self._handle_connect_error(e)
 
-    def analyze_syntax_list(self, content,
-        custom_dicts=[],
-        auto_spacing=True,
-        auto_jointing=True) -> pb.AnalyzeSyntaxListResponse:
+    def analyze_syntax_list(self, content: List[str],
+        custom_dicts: Optional[List[str]] = None,
+        auto_spacing: bool = True,
+        auto_jointing: bool = True) -> pb.AnalyzeSyntaxListResponse:
         """형태소 분석을 수행하되, 입력된 문장 단위가 일치하도록 반환됩니다.
 
         문장 분할 기능을 사용하지 않습니다.
 
         Args:
             content (List[str]): 형태소 분석할 원문의 리스트
-            custom_dicts (list, optional): 사용자 사전의 이름. 기본값은 [].
-            auto_spacing (bool, optional): 띄어쓰기 보정 기능, 기본값은 사용하도록 함.
-            auto_jointing (bool, optional): 붙여쓰기 보정 기능, 기본값은 사용하지 않음.
+            custom_dicts (Optional[List[str]]): 사용자 사전의 이름 목록. 기본값은 None(사용 안 함).
+            auto_spacing (bool): 띄어쓰기 보정 기능, 기본값은 사용하도록 함.
+            auto_jointing (bool): 붙여쓰기 보정 기능, 기본값은 사용하도록 함.
 
         Raises:
             Exception: 원격 호출시 예외가 발생할 수 있습니다.
@@ -190,14 +197,15 @@ class BareunLanguageServiceClient:
         req.encoding_type = lpb.EncodingType.UTF32
         req.auto_spacing = auto_spacing
         req.auto_jointing = auto_jointing
-        req.custom_dict_names.extend(custom_dicts)
+        if custom_dicts:
+            req.custom_dict_names.extend(custom_dicts)
 
         try:
             return self.stub.analyze_syntax_list(req, headers=self.metadata)
         except ConnectError as e:
             self._handle_connect_error(e)
 
-    def tokenize(self, content: str, auto_split=False, auto_spacing=True) -> pb.TokenizeResponse:
+    def tokenize(self, content: str, auto_split: bool = False, auto_spacing: bool = True) -> pb.TokenizeResponse:
         """문장을 토크나이즈(분절)합니다.
 
         Args:

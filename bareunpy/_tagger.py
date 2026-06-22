@@ -2,14 +2,14 @@
 import json
 import warnings
 from sys import stdout
-from typing import IO, List, Union
+from typing import IO, List, Optional, Union
 
 from google.protobuf.json_format import MessageToDict
 from bareunpy._custom_dict import CustomDict
 from bareunpy._lang_service_client import BareunLanguageServiceClient
 from bareunpy.bareun.language_service_pb2 import AnalyzeSyntaxResponse, AnalyzeSyntaxListResponse, Morpheme, Sentence, Token
 
-def _resolve_port(host: str, port: int) -> int:
+def _resolve_port(host: str, port: Optional[int]) -> int:
     """
     Resolve port number based on host.
     :param host: Host name
@@ -159,7 +159,7 @@ class Tagger:
     :param custom_dicts : List[str]. custom dictionary names for analyzing request
     """
 
-    def __init__(self, apikey:str, host: str = "", port: int = None, custom_dicts: List[str] = []):
+    def __init__(self, apikey: str, host: str = "", port: Optional[int] = None, custom_dicts: Optional[List[str]] = None):
 
         if host:
             host = host.strip()
@@ -177,7 +177,7 @@ class Tagger:
 
         self.client = BareunLanguageServiceClient(apikey, self.host, self.port)
 
-        self.custom_dicts = custom_dicts
+        self.custom_dicts = list(custom_dicts) if custom_dicts is not None else []
         self.internal_custom_dicts = {}
     
     def set_domain(self, domain: str):
@@ -191,8 +191,6 @@ class Tagger:
             DeprecationWarning,
             stacklevel=2,
         )
-        if len(self.custom_dicts) == 0:
-            self.custom_dicts = []
         self.custom_dicts.append(domain)
 
     def set_custom_dicts(self, custom_dicts: List[str]):

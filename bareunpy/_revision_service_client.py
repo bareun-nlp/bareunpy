@@ -5,7 +5,7 @@
 공식 Connect RPC 라이브러리(`connectrpc`)로 호출한다.
 """
 
-from typing import Iterator
+from typing import Iterator, NoReturn
 
 from connectrpc.errors import ConnectError
 
@@ -15,7 +15,7 @@ from bareunpy._lang_service_client import (
     MAX_MESSAGE_LENGTH,
     build_base_address,
     build_metadata,
-    BareunLanguageServiceClient,
+    handle_connect_error,
 )
 
 
@@ -47,8 +47,8 @@ class BareunRevisionServiceClient:
         """내부 HTTP 클라이언트를 닫습니다(선택). 닫은 뒤에는 호출할 수 없습니다."""
         self.stub.close()
 
-    # 에러 변환 규칙은 LanguageService 와 완전히 동일하므로 중복 구현하지 않고 재사용한다.
-    _handle_connect_error = BareunLanguageServiceClient._handle_connect_error
+    def _handle_connect_error(self, e: ConnectError) -> NoReturn:
+        raise handle_connect_error(e, apikey=self.apikey, host=self.host, port=self.port) from e
 
     def correct_error(self, request: pb.CorrectErrorRequest) -> pb.CorrectErrorResponse:
         """맞춤법 교정을 위한 단발(unary) Connect 호출.
