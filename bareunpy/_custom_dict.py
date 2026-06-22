@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from typing import List
+from connectrpc.errors import ConnectError
 from ._custom_dict_client import CustomDictionaryServiceClient
 from bareunpy.bareun.custom_dict_pb2 import CustomDictionary
 from bareunpy.bareun.dict_common_pb2 import DictSet
@@ -93,7 +94,7 @@ class CustomDict():
         self.vv_set = set()
         self.va_set = set()
 
-    def read_np_set_from_file(self, fn: str):
+    def read_np_set_from_file(self, fn: str) -> None:
         """
         고유명사 사전을 파일에서 읽어들입니다.
 
@@ -104,7 +105,7 @@ class CustomDict():
         """
         self.np_set = read_dic_file(fn)
 
-    def read_cp_set_from_file(self, fn: str):
+    def read_cp_set_from_file(self, fn: str) -> None:
         """
         복합명사 사전을 파일에서 읽어들입니다.
 
@@ -115,7 +116,7 @@ class CustomDict():
         """
         self.cp_set = read_dic_file(fn)
 
-    def read_cp_caret_set_from_file(self, fn: str):
+    def read_cp_caret_set_from_file(self, fn: str) -> None:
         """
         복합명사 분리 사전을 파일에서 읽어들입니다.
 
@@ -126,7 +127,7 @@ class CustomDict():
         """
         self.cp_caret_set = read_dic_file(fn)
 
-    def read_vv_set_from_file(self, fn: str):
+    def read_vv_set_from_file(self, fn: str) -> None:
         """
         동사 사전을 파일에서 읽어들입니다.
 
@@ -137,7 +138,7 @@ class CustomDict():
         """
         self.vv_set = read_dic_file(fn)
 
-    def read_va_set_from_file(self, fn: str):
+    def read_va_set_from_file(self, fn: str) -> None:
         """
         형용사 사전을 파일에서 읽어들입니다.
 
@@ -148,7 +149,7 @@ class CustomDict():
         """
         self.va_set = read_dic_file(fn)
 
-    def copy_np_set(self, dict_set: set):
+    def copy_np_set(self, dict_set: set) -> None:
         """
         집합을 고유명사 사전으로 지정합니다.
 
@@ -157,7 +158,7 @@ class CustomDict():
         """
         self.np_set = dict_set
 
-    def copy_cp_set(self, dict_set: set):
+    def copy_cp_set(self, dict_set: set) -> None:
         """
         집합을 복합명사 사전으로 지정합니다.
 
@@ -166,7 +167,7 @@ class CustomDict():
         """
         self.cp_set = dict_set
 
-    def copy_cp_caret_set(self, dict_set: set):
+    def copy_cp_caret_set(self, dict_set: set) -> None:
         """
         집합을 복합명사 분리 사전으로 지정합니다.
 
@@ -175,7 +176,7 @@ class CustomDict():
         """
         self.cp_caret_set = dict_set
 
-    def copy_vv_set(self, dict_set: set):
+    def copy_vv_set(self, dict_set: set) -> None:
         """
         집합을 동사 사전으로 지정합니다.
 
@@ -184,7 +185,7 @@ class CustomDict():
         """
         self.vv_set = dict_set
 
-    def copy_va_set(self, dict_set: set):
+    def copy_va_set(self, dict_set: set) -> None:
         """
         집합을 형용사 사전으로 지정합니다.
 
@@ -223,16 +224,17 @@ class CustomDict():
         """
         return self.stub.get(self.domain)
 
-    def load(self):
+    def load(self) -> None:
         """
         서버에 저장되어 있는 사용자 사전을 모두 가져옵니다.
+        ConnectError 가 발생하면(서버 미응답, 인증 오류 등) 조용히 무시하고 빈 사전 상태를 유지합니다.
         """
         try:
             d = self.stub.get(self.domain)
             self.np_set = pb_map_to_set(d.np_set)
             self.cp_caret_set = pb_map_to_set(d.cp_caret_set)
             self.cp_set = pb_map_to_set(d.cp_set)
-        except Exception:
+        except ConnectError:
             pass
 
     def clear(self) -> List[str]:
