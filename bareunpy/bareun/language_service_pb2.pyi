@@ -188,6 +188,16 @@ class AnalyzeSyntaxResponse(_message.Message):
     tokens_count: int
     def __init__(self, sentences: _Optional[_Iterable[_Union[Sentence, _Mapping]]] = ..., language: _Optional[str] = ..., tokens_count: _Optional[int] = ...) -> None: ...
 
+class AnalyzeSyntaxRawRequest(_message.Message):
+    __slots__ = ("document", "encoding_type", "auto_split_sentence")
+    DOCUMENT_FIELD_NUMBER: _ClassVar[int]
+    ENCODING_TYPE_FIELD_NUMBER: _ClassVar[int]
+    AUTO_SPLIT_SENTENCE_FIELD_NUMBER: _ClassVar[int]
+    document: _lang_common_pb2.Document
+    encoding_type: _lang_common_pb2.EncodingType
+    auto_split_sentence: bool
+    def __init__(self, document: _Optional[_Union[_lang_common_pb2.Document, _Mapping]] = ..., encoding_type: _Optional[_Union[_lang_common_pb2.EncodingType, str]] = ..., auto_split_sentence: _Optional[bool] = ...) -> None: ...
+
 class AnalyzeSyntaxListRequest(_message.Message):
     __slots__ = ("sentences", "language", "encoding_type", "custom_domain", "auto_spacing", "auto_jointing", "custom_dict_names")
     SENTENCES_FIELD_NUMBER: _ClassVar[int]

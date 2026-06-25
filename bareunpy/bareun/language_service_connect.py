@@ -24,6 +24,9 @@ class LanguageService(Protocol):
     async def analyze_syntax_list(self, request: bareun_dot_language__service__pb2.AnalyzeSyntaxListRequest, ctx: RequestContext) -> bareun_dot_language__service__pb2.AnalyzeSyntaxListResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
+    async def analyze_syntax_raw(self, request: bareun_dot_language__service__pb2.AnalyzeSyntaxRawRequest, ctx: RequestContext) -> bareun_dot_language__service__pb2.AnalyzeSyntaxResponse:
+        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+
     async def tokenize(self, request: bareun_dot_language__service__pb2.TokenizeRequest, ctx: RequestContext) -> bareun_dot_language__service__pb2.TokenizeResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
@@ -52,6 +55,16 @@ class LanguageServiceASGIApplication(ConnectASGIApplication[LanguageService]):
                         idempotency_level=IdempotencyLevel.UNKNOWN,
                     ),
                     function=svc.analyze_syntax_list,
+                ),
+                "/bareun.LanguageService/AnalyzeSyntaxRaw": Endpoint.unary(
+                    method=MethodInfo(
+                        name="AnalyzeSyntaxRaw",
+                        service_name="bareun.LanguageService",
+                        input=bareun_dot_language__service__pb2.AnalyzeSyntaxRawRequest,
+                        output=bareun_dot_language__service__pb2.AnalyzeSyntaxResponse,
+                        idempotency_level=IdempotencyLevel.UNKNOWN,
+                    ),
+                    function=svc.analyze_syntax_raw,
                 ),
                 "/bareun.LanguageService/Tokenize": Endpoint.unary(
                     method=MethodInfo(
@@ -117,6 +130,26 @@ class LanguageServiceClient(ConnectClient):
             timeout_ms=timeout_ms,
         )
 
+    async def analyze_syntax_raw(
+        self,
+        request: bareun_dot_language__service__pb2.AnalyzeSyntaxRawRequest,
+        *,
+        headers: Headers | Mapping[str, str] | None = None,
+        timeout_ms: int | None = None,
+    ) -> bareun_dot_language__service__pb2.AnalyzeSyntaxResponse:
+        return await self.execute_unary(
+            request=request,
+            method=MethodInfo(
+                name="AnalyzeSyntaxRaw",
+                service_name="bareun.LanguageService",
+                input=bareun_dot_language__service__pb2.AnalyzeSyntaxRawRequest,
+                output=bareun_dot_language__service__pb2.AnalyzeSyntaxResponse,
+                idempotency_level=IdempotencyLevel.UNKNOWN,
+            ),
+            headers=headers,
+            timeout_ms=timeout_ms,
+        )
+
     async def tokenize(
         self,
         request: bareun_dot_language__service__pb2.TokenizeRequest,
@@ -146,6 +179,8 @@ class LanguageServiceSync(Protocol):
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
     def analyze_syntax_list(self, request: bareun_dot_language__service__pb2.AnalyzeSyntaxListRequest, ctx: RequestContext) -> bareun_dot_language__service__pb2.AnalyzeSyntaxListResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+    def analyze_syntax_raw(self, request: bareun_dot_language__service__pb2.AnalyzeSyntaxRawRequest, ctx: RequestContext) -> bareun_dot_language__service__pb2.AnalyzeSyntaxResponse:
+        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
     def tokenize(self, request: bareun_dot_language__service__pb2.TokenizeRequest, ctx: RequestContext) -> bareun_dot_language__service__pb2.TokenizeResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
@@ -173,6 +208,16 @@ class LanguageServiceWSGIApplication(ConnectWSGIApplication):
                         idempotency_level=IdempotencyLevel.UNKNOWN,
                     ),
                     function=service.analyze_syntax_list,
+                ),
+                "/bareun.LanguageService/AnalyzeSyntaxRaw": EndpointSync.unary(
+                    method=MethodInfo(
+                        name="AnalyzeSyntaxRaw",
+                        service_name="bareun.LanguageService",
+                        input=bareun_dot_language__service__pb2.AnalyzeSyntaxRawRequest,
+                        output=bareun_dot_language__service__pb2.AnalyzeSyntaxResponse,
+                        idempotency_level=IdempotencyLevel.UNKNOWN,
+                    ),
+                    function=service.analyze_syntax_raw,
                 ),
                 "/bareun.LanguageService/Tokenize": EndpointSync.unary(
                     method=MethodInfo(
@@ -232,6 +277,26 @@ class LanguageServiceClientSync(ConnectClientSync):
                 service_name="bareun.LanguageService",
                 input=bareun_dot_language__service__pb2.AnalyzeSyntaxListRequest,
                 output=bareun_dot_language__service__pb2.AnalyzeSyntaxListResponse,
+                idempotency_level=IdempotencyLevel.UNKNOWN,
+            ),
+            headers=headers,
+            timeout_ms=timeout_ms,
+        )
+
+    def analyze_syntax_raw(
+        self,
+        request: bareun_dot_language__service__pb2.AnalyzeSyntaxRawRequest,
+        *,
+        headers: Headers | Mapping[str, str] | None = None,
+        timeout_ms: int | None = None,
+    ) -> bareun_dot_language__service__pb2.AnalyzeSyntaxResponse:
+        return self.execute_unary(
+            request=request,
+            method=MethodInfo(
+                name="AnalyzeSyntaxRaw",
+                service_name="bareun.LanguageService",
+                input=bareun_dot_language__service__pb2.AnalyzeSyntaxRawRequest,
+                output=bareun_dot_language__service__pb2.AnalyzeSyntaxResponse,
                 idempotency_level=IdempotencyLevel.UNKNOWN,
             ),
             headers=headers,

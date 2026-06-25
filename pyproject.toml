@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bareunpy"
-version = "2.0.0"
+version = "2.0.1"
 description = "The bareun python library using connect-rpc"
 authors = ["Gihyun YUN <gih2yun@baikal.ai>"]
 license = "BSD-3-Clause"

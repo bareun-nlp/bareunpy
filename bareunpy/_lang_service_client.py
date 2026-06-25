@@ -171,6 +171,35 @@ class BareunLanguageServiceClient:
         except ConnectError as e:
             self._handle_connect_error(e)
 
+    def analyze_syntax_raw(self, content: str,
+        auto_split: bool = False) -> pb.AnalyzeSyntaxResponse:
+        """모델 추론만 수행하는 원시(raw) 형태소 분석을 수행합니다.
+
+        복합명사·동사 분해, 자동 띄어쓰기·붙여쓰기 보정, 사용자 사전을 일절 적용하지 않습니다.
+        seg+tag 모델 추론 결과를 그대로 반환하므로, 후처리 없는 순수 모델 출력이 필요할 때
+        사용합니다. 응답 형식은 ``AnalyzeSyntaxResponse`` 로 ``analyze_syntax`` 와 동일합니다.
+
+        Args:
+            content (str): 형태소 분석할 원문. 여러 문장은 개행문자로 구분합니다.
+            auto_split (bool): 문장 자동 분리 여부. 기본값은 False(개행 기준으로 분리).
+
+        Raises:
+            Exception: 원격 호출시 예외가 발생할 수 있습니다.
+
+        Returns:
+            pb.AnalyzeSyntaxResponse: 원시 모델 추론 형태소 분석 결과
+        """
+        req = pb.AnalyzeSyntaxRawRequest()
+        req.document.content = content
+        req.document.language = "ko_KR"
+        req.encoding_type = lpb.EncodingType.UTF32
+        req.auto_split_sentence = auto_split
+
+        try:
+            return self.stub.analyze_syntax_raw(req, headers=self.metadata)
+        except ConnectError as e:
+            self._handle_connect_error(e)
+
     def analyze_syntax_list(self, content: List[str],
         custom_dicts: Optional[List[str]] = None,
         auto_spacing: bool = True,
