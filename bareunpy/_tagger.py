@@ -214,6 +214,22 @@ class Tagger:
             self.internal_custom_dicts[name] = CustomDict(self.apikey, name, self.host, self.port)
             return self.internal_custom_dicts[name]
 
+    def tag_raw(self, phrase: str, auto_split: bool = False) -> Tagged:
+        """모델 추론만 수행하는 원시(raw) 형태소 분석을 수행합니다.
+
+        복합명사·동사 분해, 자동 띄어쓰기·붙여쓰기 보정, 사용자 사전을 일절 적용하지 않습니다.
+        seg+tag 모델의 순수 추론 결과가 필요할 때 사용합니다.
+
+        :param phrase: 분석할 문자열
+        :param auto_split: 문장 자동 분리 여부 (기본값: False)
+        :return: Tagged result instance
+        """
+        if len(phrase) == 0:
+            print("OOPS, no sentences.")
+            return Tagged('', AnalyzeSyntaxResponse())
+        res = self.client.analyze_syntax_raw(phrase, auto_split=auto_split)
+        return Tagged(phrase, res)
+
     def tag(self, phrase: str, auto_split: bool = False, auto_spacing: bool = True, auto_jointing: bool = True) -> Tagged:
         if len(phrase) == 0:
             print("OOPS, no sentences.")

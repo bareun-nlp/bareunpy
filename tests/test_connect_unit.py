@@ -316,6 +316,51 @@ def test_analyze_syntax_translates_connect_error(monkeypatch):
     assert "연결할 수 없습니다" in str(ei.value)
 
 
+def test_tagger_tag_raw(monkeypatch):
+    """tag_raw()가 analyze_syntax_raw를 호출하고 결과를 Tagged로 반환한다."""
+    t = Tagger(apikey=APIKEY, host=HOST, port=PORT)
+
+    captured = {}
+
+    def fake_raw(request, headers=None, timeout_ms=None):
+        # 요청 필드 캡처: document, auto_split_sentence, encoding_type
+        captured["req"] = request
+        return _analyze_response()
+
+    monkeypatch.setattr(t.client.stub, "analyze_syntax_raw", fake_raw)
+    result = t.tag_raw("나는밥을먹었다")
+
+    # auto_split 기본값 False가 요청에 반영되어야 한다
+    assert captured["req"].auto_split_sentence is False
+    assert captured["req"].document.content == "나는밥을먹었다"
+    # 반환된 Tagged는 정상적으로 형태소를 포함한다
+    assert result.morphs() == ["오늘", "은", "먹", "다"]
+
+    # auto_split=True 전달 검증
+    t.tag_raw("문장1. 문장2.", auto_split=True)
+    assert captured["req"].auto_split_sentence is True
+
+
+def test_tagger_tag_raw_empty():
+    """tag_raw()에 빈 문자열을 전달하면 빈 결과를 반환한다."""
+    t = Tagger(apikey=APIKEY, host=HOST, port=PORT)
+    result = t.tag_raw("")
+    assert result.morphs() == []
+
+
+def test_analyze_syntax_raw_translates_connect_error(monkeypatch):
+    """analyze_syntax_raw에서 ConnectError가 발생하면 사람이 읽을 수 있는 예외로 변환된다."""
+    cli = BareunLanguageServiceClient(APIKEY, HOST, PORT)
+
+    def raiser(request, headers=None, timeout_ms=None):
+        raise ConnectError(Code.UNAUTHENTICATED, "invalid key")
+
+    monkeypatch.setattr(cli.stub, "analyze_syntax_raw", raiser)
+    with pytest.raises(Exception) as ei:
+        cli.analyze_syntax_raw("테스트")
+    assert "API KEY" in str(ei.value)
+
+
 # ----------------------------------------------------------------------------
 # 사용자 사전
 # ----------------------------------------------------------------------------

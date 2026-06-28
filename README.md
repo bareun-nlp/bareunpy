@@ -6,7 +6,13 @@
 
 ---
 
-## 2.0 변경사항
+## 변경사항
+
+### 2.0.1
+
+- **AnalyzeSyntaxRaw API 추가**: `tagger.tag_raw()` — seg+tag 모델 추론만 수행, 복합명사·동사 분해/사용자 사전/자동 띄어쓰기 후처리 없이 순수 모델 출력 반환
+
+### 2.0
 
 - **Connect RPC 전환**: `grpcio` 의존성 제거. 공식 [`connectrpc`](https://github.com/connectrpc/connect-python) 라이브러리로 교체
 - **경량화**: 의존성 2개(`connectrpc`, `protobuf`)만 필요 — 기존 `grpcio` / `connecpy` 설치 불필요
@@ -98,6 +104,19 @@ res = tagger.tags(["안녕하세요.", "반가워요!"])
 
 # taglist(): 입력된 문장 단위를 그대로 유지하여 분석 (문장 분할 없음)
 res = tagger.taglist(["안녕하세요.", "반가워요!"])
+```
+
+### 원시(Raw) 형태소 분석
+
+`tag_raw()`는 seg+tag 모델 추론 결과를 후처리 없이 반환합니다. 복합명사·동사 분해, 자동 띄어쓰기·붙여쓰기 보정, 사용자 사전을 적용하지 않아 **순수 모델 출력**을 확인할 때 사용합니다.
+
+```python
+# tag_raw(): 후처리 없는 순수 모델 출력
+res = tagger.tag_raw('나는밥을먹었다')
+print(res.pos())
+
+# 문장 자동 분리 적용 가능
+res = tagger.tag_raw('나는밥을먹었다. 그리고잤다.', auto_split=True)
 ```
 
 ### 분석 옵션
