@@ -6,11 +6,13 @@
 
 ---
 
-## 2.0.1 변경사항
+## 변경사항
+
+### 2.0.1
 
 - **AnalyzeSyntaxRaw API 추가**: `tagger.tag_raw()` — seg+tag 모델 추론만 수행, 복합명사·동사 분해/사용자 사전/자동 띄어쓰기 후처리 없이 순수 모델 출력 반환
 
-## 2.0 변경사항
+### 2.0
 
 - **Connect RPC 전환**: `grpcio` 의존성 제거. 공식 [`connectrpc`](https://github.com/connectrpc/connect-python) 라이브러리로 교체
 - **경량화**: 의존성 2개(`connectrpc`, `protobuf`)만 필요 — 기존 `grpcio` / `connecpy` 설치 불필요
