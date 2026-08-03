@@ -140,7 +140,8 @@ class BareunLanguageServiceClient:
         custom_dicts: Optional[List[str]] = None,
         auto_split: bool = False,
         auto_spacing: bool = True,
-        auto_jointing: bool = True) -> pb.AnalyzeSyntaxResponse:
+        auto_jointing: bool = True,
+        with_sense: bool = False) -> pb.AnalyzeSyntaxResponse:
         """형태소 분석을 수행합니다.
 
         Args:
@@ -149,6 +150,10 @@ class BareunLanguageServiceClient:
             auto_split (bool): 문장 자동 분리 여부, 기본값은 사용하지 않음.
             auto_spacing (bool): 띄어쓰기 보정 기능, 기본값은 사용하도록 함.
             auto_jointing (bool): 붙여쓰기 보정 기능, 기본값은 사용하도록 함.
+            with_sense (bool): 동형이의어 의미 구분(WSD, 베타) 결과를 함께 받을지 여부.
+                기본값 False. True 로 주면 응답 형태소에 ``sense``(어깨번호·뜻풀이·우리말샘
+                번호·선택 확률)가 실립니다. 서버에서 추론이 한 번 더 일어나므로 필요할 때만
+                켜세요. False 면 응답·비용이 종전과 동일합니다.
 
         Raises:
             Exception: 원격 호출시 예외가 발생할 수 있습니다.
@@ -163,6 +168,7 @@ class BareunLanguageServiceClient:
         req.auto_split_sentence = auto_split
         req.auto_spacing = auto_spacing
         req.auto_jointing = auto_jointing
+        req.with_sense = with_sense
         if custom_dicts:
             req.custom_dict_names.extend(custom_dicts)
 
@@ -172,7 +178,8 @@ class BareunLanguageServiceClient:
             self._handle_connect_error(e)
 
     def analyze_syntax_raw(self, content: str,
-        auto_split: bool = False) -> pb.AnalyzeSyntaxResponse:
+        auto_split: bool = False,
+        with_sense: bool = False) -> pb.AnalyzeSyntaxResponse:
         """모델 추론만 수행하는 원시(raw) 형태소 분석을 수행합니다.
 
         복합명사·동사 분해, 자동 띄어쓰기·붙여쓰기 보정, 사용자 사전을 일절 적용하지 않습니다.
@@ -182,6 +189,8 @@ class BareunLanguageServiceClient:
         Args:
             content (str): 형태소 분석할 원문. 여러 문장은 개행문자로 구분합니다.
             auto_split (bool): 문장 자동 분리 여부. 기본값은 False(개행 기준으로 분리).
+            with_sense (bool): 동형이의어 의미 구분(WSD, 베타) 결과를 함께 받을지 여부.
+                기본값 False. 의미도 후처리 없이 모델 출력 그대로 실립니다.
 
         Raises:
             Exception: 원격 호출시 예외가 발생할 수 있습니다.
@@ -194,6 +203,7 @@ class BareunLanguageServiceClient:
         req.document.language = "ko_KR"
         req.encoding_type = lpb.EncodingType.UTF32
         req.auto_split_sentence = auto_split
+        req.with_sense = with_sense
 
         try:
             return self.stub.analyze_syntax_raw(req, headers=self.metadata)
@@ -203,7 +213,8 @@ class BareunLanguageServiceClient:
     def analyze_syntax_list(self, content: List[str],
         custom_dicts: Optional[List[str]] = None,
         auto_spacing: bool = True,
-        auto_jointing: bool = True) -> pb.AnalyzeSyntaxListResponse:
+        auto_jointing: bool = True,
+        with_sense: bool = False) -> pb.AnalyzeSyntaxListResponse:
         """형태소 분석을 수행하되, 입력된 문장 단위가 일치하도록 반환됩니다.
 
         문장 분할 기능을 사용하지 않습니다.
@@ -213,6 +224,8 @@ class BareunLanguageServiceClient:
             custom_dicts (Optional[List[str]]): 사용자 사전의 이름 목록. 기본값은 None(사용 안 함).
             auto_spacing (bool): 띄어쓰기 보정 기능, 기본값은 사용하도록 함.
             auto_jointing (bool): 붙여쓰기 보정 기능, 기본값은 사용하도록 함.
+            with_sense (bool): 동형이의어 의미 구분(WSD, 베타) 결과를 함께 받을지 여부.
+                기본값 False.
 
         Raises:
             Exception: 원격 호출시 예외가 발생할 수 있습니다.
@@ -226,6 +239,7 @@ class BareunLanguageServiceClient:
         req.encoding_type = lpb.EncodingType.UTF32
         req.auto_spacing = auto_spacing
         req.auto_jointing = auto_jointing
+        req.with_sense = with_sense
         if custom_dicts:
             req.custom_dict_names.extend(custom_dicts)
 

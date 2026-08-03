@@ -1013,3 +1013,166 @@ def test_custom_dict_load_exception(monkeypatch):
     # ConnectError 는 전파되지 않아야 한다
     cd.load()
     assert len(cd.np_set) == 0
+
+
+# ----------------------------------------------------------------------------
+# 동형이의어 의미 구분(WSD, 베타) — with_sense / senses() / pos(sense=True)
+# ----------------------------------------------------------------------------
+def _sense_response():
+    """'다리를 건넜다' 응답. 내용어 2개에만 sense 가 붙고 조사·어미에는 없다."""
+    다리 = lpb2.Morpheme(
+        text=lcpb.TextSpan(content="다리"),
+        tag=lpb2.Morpheme.Tag.NNG,
+        probability=0.99,
+        sense=lpb2.Sense(
+            sense_no=5,
+            meaning="물을 건너거나 … 건너다닐 수 있도록 만든 시설물.",
+            urimal_target_id=836,
+            probability=0.93,
+        ),
+    )
+    를 = lpb2.Morpheme(text=lcpb.TextSpan(content="를"), tag=lpb2.Morpheme.Tag.JKO)
+    건너 = lpb2.Morpheme(
+        text=lcpb.TextSpan(content="건너"),
+        tag=lpb2.Morpheme.Tag.VV,
+        sense=lpb2.Sense(sense_no=1, meaning="맞은편으로 가다.", urimal_target_id=0, probability=1.0),
+    )
+    다 = lpb2.Morpheme(text=lcpb.TextSpan(content="다"), tag=lpb2.Morpheme.Tag.EF)
+    t1 = lpb2.Token(text=lcpb.TextSpan(content="다리를"), morphemes=[다리, 를])
+    t2 = lpb2.Token(text=lcpb.TextSpan(content="건넜다"), morphemes=[건너, 다])
+    return lpb2.AnalyzeSyntaxResponse(sentences=[lpb2.Sentence(tokens=[t1, t2])])
+
+
+def test_analyze_syntax_with_sense_flag(monkeypatch):
+    """with_sense 인자가 AnalyzeSyntaxRequest.with_sense 로 전달된다(기본은 False)."""
+    t = Tagger(apikey=APIKEY, host=HOST, port=PORT)
+    captured = {}
+
+    def fake(request, headers=None, timeout_ms=None):
+        captured["req"] = request
+        return _sense_response()
+
+    monkeypatch.setattr(t.client.stub, "analyze_syntax", fake)
+
+    t.tag("다리를 건넜다.")
+    assert captured["req"].with_sense is False
+
+    t.tag("다리를 건넜다.", with_sense=True)
+    assert captured["req"].with_sense is True
+
+    # tags()(문장 배열 → 개행 결합)도 같은 옵션을 전달한다.
+    t.tags(["다리를 건넜다."], with_sense=True)
+    assert captured["req"].with_sense is True
+
+
+def test_analyze_syntax_raw_with_sense_flag(monkeypatch):
+    """tag_raw() 도 with_sense 를 전달한다."""
+    t = Tagger(apikey=APIKEY, host=HOST, port=PORT)
+    captured = {}
+
+    def fake(request, headers=None, timeout_ms=None):
+        captured["req"] = request
+        return _sense_response()
+
+    monkeypatch.setattr(t.client.stub, "analyze_syntax_raw", fake)
+
+    t.tag_raw("다리를 건넜다.")
+    assert captured["req"].with_sense is False
+
+    t.tag_raw("다리를 건넜다.", with_sense=True)
+    assert captured["req"].with_sense is True
+
+
+def test_analyze_syntax_list_with_sense_flag(monkeypatch):
+    """taglist() 도 with_sense 를 전달한다."""
+    t = Tagger(apikey=APIKEY, host=HOST, port=PORT)
+    captured = {}
+
+    def fake(request, headers=None, timeout_ms=None):
+        captured["req"] = request
+        return lpb2.AnalyzeSyntaxListResponse(sentences=_sense_response().sentences)
+
+    monkeypatch.setattr(t.client.stub, "analyze_syntax_list", fake)
+
+    t.taglist(["다리를 건넜다."])
+    assert captured["req"].with_sense is False
+
+    t.taglist(["다리를 건넜다."], with_sense=True)
+    assert captured["req"].with_sense is True
+
+
+def test_tagged_senses():
+    """senses() 는 의미가 부여된 형태소만 SenseInfo 로 돌려준다."""
+    tagged = Tagged("다리를 건넜다.", _sense_response())
+    senses = tagged.senses()
+    # 조사(를)·어미(다)는 sense 가 없으므로 2건만 나온다.
+    assert [(s.content, s.tag, s.sense_no) for s in senses] == [
+        ("다리", "NNG", 5),
+        ("건너", "VV", 1),
+    ]
+    first = senses[0]
+    assert first.meaning.startswith("물을 건너거나")
+    assert first.urimal_target_id == 836
+    assert first.probability == pytest.approx(0.93, abs=1e-6)
+    assert first.urimal_url == "https://opendict.korean.go.kr/dictionary/view?sense_no=836"
+    # 우리말샘 번호가 없으면(0) 주소도 만들지 않는다.
+    assert senses[1].urimal_url == ""
+
+
+def test_tagged_senses_flatten_false():
+    """senses(flatten=False) 는 어절별 목록의 목록을 돌려준다."""
+    tagged = Tagged("다리를 건넜다.", _sense_response())
+    result = tagged.senses(flatten=False)
+    assert len(result) == 2                  # 어절 2개
+    assert [len(x) for x in result] == [1, 1]  # 각 어절에서 sense 는 1건씩
+    assert result[0][0].sense_no == 5
+
+
+def test_tagged_senses_empty_when_not_requested():
+    """with_sense 없이 분석한 응답에는 sense 가 없어 빈 목록이 나온다."""
+    tagged = Tagged("오늘은 먹다", _analyze_response())
+    assert tagged.senses() == []
+
+
+def test_tagged_pos_with_sense():
+    """pos(sense=True) 는 어깨번호를 표기/튜플로 함께 돌려준다."""
+    tagged = Tagged("다리를 건넜다.", _sense_response())
+
+    # join=True: 표층형에 __NNN(3자리 0채움)을 덧붙인다. 미부여 형태소는 그대로.
+    assert tagged.pos(join=True, sense=True) == [
+        "다리__005/NNG", "를/JKO", "건너__001/VV", "다/EF",
+    ]
+    # join=True, detail=True: 확률/oov 표기와 함께 어깨번호도 붙는다.
+    assert tagged.pos(join=True, detail=True, sense=True)[0] == "다리__005/NNG:0.990"
+    # join=False: 튜플 끝에 어깨번호(미부여는 0)가 추가된다.
+    assert tagged.pos(sense=True) == [
+        ("다리", "NNG", 5), ("를", "JKO", 0), ("건너", "VV", 1), ("다", "EF", 0),
+    ]
+    # detail=True, join=False: 4-튜플 + 어깨번호 = 5-튜플
+    detailed = tagged.pos(detail=True, sense=True)
+    assert len(detailed[0]) == 5 and detailed[0][-1] == 5
+    # sense=False(기본)면 기존 출력 그대로다 — 하위호환.
+    assert tagged.pos() == [("다리", "NNG"), ("를", "JKO"), ("건너", "VV"), ("다", "EF")]
+
+
+def test_tagger_senses_helper(monkeypatch):
+    """Tagger.senses() 는 with_sense=True 로 호출하고 SenseInfo 목록을 돌려준다."""
+    t = Tagger(apikey=APIKEY, host=HOST, port=PORT)
+    captured = {}
+
+    def fake(request, headers=None, timeout_ms=None):
+        captured["req"] = request
+        return _sense_response()
+
+    monkeypatch.setattr(t.client.stub, "analyze_syntax", fake)
+    senses = t.senses("다리를 건넜다.")
+    assert captured["req"].with_sense is True
+    assert [s.sense_no for s in senses] == [5, 1]
+
+    # Tagger.pos(sense=True) 도 요청에 with_sense 를 켠다.
+    assert t.pos("다리를 건넜다.", join=True, sense=True)[0] == "다리__005/NNG"
+    assert captured["req"].with_sense is True
+
+    # auto_split 전달도 확인한다.
+    t.senses("문장1. 문장2.", auto_split=True)
+    assert captured["req"].auto_split_sentence is True
