@@ -28,6 +28,9 @@ Tagger
 Tagged
     Wrapper for tagged output
     `from bareunpy import Tagged`
+SenseInfo
+    동형이의어 의미 구분(WSD, 베타) 결과 한 건
+    `from bareunpy import SenseInfo`
 CustomDict
     Custom dictionary for Korean.
     `from bareunpy import CustomDict`
@@ -49,7 +52,7 @@ Get bareun
 import sys
 import os
 
-from bareunpy._tagger import Tagger, Tagged
+from bareunpy._tagger import Tagger, Tagged, SenseInfo
 from bareunpy._tokenizer import Tokenizer, Tokenized
 from bareunpy._corrector import Corrector
 from bareunpy._custom_dict import CustomDict

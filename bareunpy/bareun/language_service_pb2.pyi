@@ -18,8 +18,20 @@ class Sentence(_message.Message):
     refined: str
     def __init__(self, text: _Optional[_Union[_lang_common_pb2.TextSpan, _Mapping]] = ..., tokens: _Optional[_Iterable[_Union[Token, _Mapping]]] = ..., refined: _Optional[str] = ...) -> None: ...
 
+class Sense(_message.Message):
+    __slots__ = ("sense_no", "meaning", "urimal_target_id", "probability")
+    SENSE_NO_FIELD_NUMBER: _ClassVar[int]
+    MEANING_FIELD_NUMBER: _ClassVar[int]
+    URIMAL_TARGET_ID_FIELD_NUMBER: _ClassVar[int]
+    PROBABILITY_FIELD_NUMBER: _ClassVar[int]
+    sense_no: int
+    meaning: str
+    urimal_target_id: int
+    probability: float
+    def __init__(self, sense_no: _Optional[int] = ..., meaning: _Optional[str] = ..., urimal_target_id: _Optional[int] = ..., probability: _Optional[float] = ...) -> None: ...
+
 class Morpheme(_message.Message):
-    __slots__ = ("text", "tag", "probability", "out_of_vocab", "custom_dict_name")
+    __slots__ = ("text", "tag", "probability", "out_of_vocab", "custom_dict_name", "sense")
     class OutOfVocab(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
         __slots__ = ()
         IN_WORD_EMBEDDING: _ClassVar[Morpheme.OutOfVocab]
@@ -139,12 +151,14 @@ class Morpheme(_message.Message):
     PROBABILITY_FIELD_NUMBER: _ClassVar[int]
     OUT_OF_VOCAB_FIELD_NUMBER: _ClassVar[int]
     CUSTOM_DICT_NAME_FIELD_NUMBER: _ClassVar[int]
+    SENSE_FIELD_NUMBER: _ClassVar[int]
     text: _lang_common_pb2.TextSpan
     tag: Morpheme.Tag
     probability: float
     out_of_vocab: Morpheme.OutOfVocab
     custom_dict_name: str
-    def __init__(self, text: _Optional[_Union[_lang_common_pb2.TextSpan, _Mapping]] = ..., tag: _Optional[_Union[Morpheme.Tag, str]] = ..., probability: _Optional[float] = ..., out_of_vocab: _Optional[_Union[Morpheme.OutOfVocab, str]] = ..., custom_dict_name: _Optional[str] = ...) -> None: ...
+    sense: Sense
+    def __init__(self, text: _Optional[_Union[_lang_common_pb2.TextSpan, _Mapping]] = ..., tag: _Optional[_Union[Morpheme.Tag, str]] = ..., probability: _Optional[float] = ..., out_of_vocab: _Optional[_Union[Morpheme.OutOfVocab, str]] = ..., custom_dict_name: _Optional[str] = ..., sense: _Optional[_Union[Sense, _Mapping]] = ...) -> None: ...
 
 class Token(_message.Message):
     __slots__ = ("text", "morphemes", "lemma", "tagged", "modified")
@@ -161,13 +175,14 @@ class Token(_message.Message):
     def __init__(self, text: _Optional[_Union[_lang_common_pb2.TextSpan, _Mapping]] = ..., morphemes: _Optional[_Iterable[_Union[Morpheme, _Mapping]]] = ..., lemma: _Optional[str] = ..., tagged: _Optional[str] = ..., modified: _Optional[str] = ...) -> None: ...
 
 class AnalyzeSyntaxRequest(_message.Message):
-    __slots__ = ("document", "encoding_type", "auto_split_sentence", "custom_domain", "auto_spacing", "auto_jointing", "custom_dict_names")
+    __slots__ = ("document", "encoding_type", "auto_split_sentence", "custom_domain", "auto_spacing", "auto_jointing", "with_sense", "custom_dict_names")
     DOCUMENT_FIELD_NUMBER: _ClassVar[int]
     ENCODING_TYPE_FIELD_NUMBER: _ClassVar[int]
     AUTO_SPLIT_SENTENCE_FIELD_NUMBER: _ClassVar[int]
     CUSTOM_DOMAIN_FIELD_NUMBER: _ClassVar[int]
     AUTO_SPACING_FIELD_NUMBER: _ClassVar[int]
     AUTO_JOINTING_FIELD_NUMBER: _ClassVar[int]
+    WITH_SENSE_FIELD_NUMBER: _ClassVar[int]
     CUSTOM_DICT_NAMES_FIELD_NUMBER: _ClassVar[int]
     document: _lang_common_pb2.Document
     encoding_type: _lang_common_pb2.EncodingType
@@ -175,8 +190,9 @@ class AnalyzeSyntaxRequest(_message.Message):
     custom_domain: str
     auto_spacing: bool
     auto_jointing: bool
+    with_sense: bool
     custom_dict_names: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, document: _Optional[_Union[_lang_common_pb2.Document, _Mapping]] = ..., encoding_type: _Optional[_Union[_lang_common_pb2.EncodingType, str]] = ..., auto_split_sentence: _Optional[bool] = ..., custom_domain: _Optional[str] = ..., auto_spacing: _Optional[bool] = ..., auto_jointing: _Optional[bool] = ..., custom_dict_names: _Optional[_Iterable[str]] = ...) -> None: ...
+    def __init__(self, document: _Optional[_Union[_lang_common_pb2.Document, _Mapping]] = ..., encoding_type: _Optional[_Union[_lang_common_pb2.EncodingType, str]] = ..., auto_split_sentence: _Optional[bool] = ..., custom_domain: _Optional[str] = ..., auto_spacing: _Optional[bool] = ..., auto_jointing: _Optional[bool] = ..., with_sense: _Optional[bool] = ..., custom_dict_names: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class AnalyzeSyntaxResponse(_message.Message):
     __slots__ = ("sentences", "language", "tokens_count")
@@ -189,23 +205,26 @@ class AnalyzeSyntaxResponse(_message.Message):
     def __init__(self, sentences: _Optional[_Iterable[_Union[Sentence, _Mapping]]] = ..., language: _Optional[str] = ..., tokens_count: _Optional[int] = ...) -> None: ...
 
 class AnalyzeSyntaxRawRequest(_message.Message):
-    __slots__ = ("document", "encoding_type", "auto_split_sentence")
+    __slots__ = ("document", "encoding_type", "auto_split_sentence", "with_sense")
     DOCUMENT_FIELD_NUMBER: _ClassVar[int]
     ENCODING_TYPE_FIELD_NUMBER: _ClassVar[int]
     AUTO_SPLIT_SENTENCE_FIELD_NUMBER: _ClassVar[int]
+    WITH_SENSE_FIELD_NUMBER: _ClassVar[int]
     document: _lang_common_pb2.Document
     encoding_type: _lang_common_pb2.EncodingType
     auto_split_sentence: bool
-    def __init__(self, document: _Optional[_Union[_lang_common_pb2.Document, _Mapping]] = ..., encoding_type: _Optional[_Union[_lang_common_pb2.EncodingType, str]] = ..., auto_split_sentence: _Optional[bool] = ...) -> None: ...
+    with_sense: bool
+    def __init__(self, document: _Optional[_Union[_lang_common_pb2.Document, _Mapping]] = ..., encoding_type: _Optional[_Union[_lang_common_pb2.EncodingType, str]] = ..., auto_split_sentence: _Optional[bool] = ..., with_sense: _Optional[bool] = ...) -> None: ...
 
 class AnalyzeSyntaxListRequest(_message.Message):
-    __slots__ = ("sentences", "language", "encoding_type", "custom_domain", "auto_spacing", "auto_jointing", "custom_dict_names")
+    __slots__ = ("sentences", "language", "encoding_type", "custom_domain", "auto_spacing", "auto_jointing", "with_sense", "custom_dict_names")
     SENTENCES_FIELD_NUMBER: _ClassVar[int]
     LANGUAGE_FIELD_NUMBER: _ClassVar[int]
     ENCODING_TYPE_FIELD_NUMBER: _ClassVar[int]
     CUSTOM_DOMAIN_FIELD_NUMBER: _ClassVar[int]
     AUTO_SPACING_FIELD_NUMBER: _ClassVar[int]
     AUTO_JOINTING_FIELD_NUMBER: _ClassVar[int]
+    WITH_SENSE_FIELD_NUMBER: _ClassVar[int]
     CUSTOM_DICT_NAMES_FIELD_NUMBER: _ClassVar[int]
     sentences: _containers.RepeatedScalarFieldContainer[str]
     language: str
@@ -213,8 +232,9 @@ class AnalyzeSyntaxListRequest(_message.Message):
     custom_domain: str
     auto_spacing: bool
     auto_jointing: bool
+    with_sense: bool
     custom_dict_names: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, sentences: _Optional[_Iterable[str]] = ..., language: _Optional[str] = ..., encoding_type: _Optional[_Union[_lang_common_pb2.EncodingType, str]] = ..., custom_domain: _Optional[str] = ..., auto_spacing: _Optional[bool] = ..., auto_jointing: _Optional[bool] = ..., custom_dict_names: _Optional[_Iterable[str]] = ...) -> None: ...
+    def __init__(self, sentences: _Optional[_Iterable[str]] = ..., language: _Optional[str] = ..., encoding_type: _Optional[_Union[_lang_common_pb2.EncodingType, str]] = ..., custom_domain: _Optional[str] = ..., auto_spacing: _Optional[bool] = ..., auto_jointing: _Optional[bool] = ..., with_sense: _Optional[bool] = ..., custom_dict_names: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class AnalyzeSyntaxListResponse(_message.Message):
     __slots__ = ("sentences", "language", "tokens_count")

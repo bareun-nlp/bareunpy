@@ -8,6 +8,15 @@
 
 ## 변경사항
 
+### 2.1.0
+
+- **동형이의어 의미 구분(WSD) API 추가 — 베타**: 표기·품사가 같은데 뜻이 다른 단어(`다리`(橋)/`다리`(脚))를 문맥으로 구분합니다.
+  - `tagger.senses('다리를 건넜다.')` — 의미가 부여된 형태소만 `SenseInfo`(어깨번호·뜻풀이·우리말샘 번호·선택 확률) 목록으로 반환
+  - `tagger.tag(..., with_sense=True)` / `tags` / `taglist` / `tag_raw` — 분석 결과에 의미를 함께 요청
+  - `res.senses()`, `res.pos(sense=True)` — 결과에서 의미 꺼내기(`다리__005/NNG`)
+  - 기본값은 모두 `False` 라 **기존 코드의 동작·응답은 그대로**입니다.
+  - 베타 기능이며 **바른 3.1.0** 이상 서버가 필요합니다(현재는 api.bareun.ai 에서 사용 가능).
+
 ### 2.0.1
 
 - **AnalyzeSyntaxRaw API 추가**: `tagger.tag_raw()` — seg+tag 모델 추론만 수행, 복합명사·동사 분해/사용자 사전/자동 띄어쓰기 후처리 없이 순수 모델 출력 반환
@@ -119,6 +128,50 @@ print(res.pos())
 res = tagger.tag_raw('나는밥을먹었다. 그리고잤다.', auto_split=True)
 ```
 
+### 동형이의어 의미 구분 (WSD, 베타)
+
+한국어에는 표기가 같고 뜻이 전혀 다른 단어가 많습니다. `다리`는 건너는 다리(橋)일 수도, 몸의 다리(脚)일 수도 있고 품사는 둘 다 `NNG` 입니다. `senses()` 는 문맥을 보고 **어느 뜻인지**를 어깨번호(사전 의미 번호)와 뜻풀이로 돌려줍니다.
+
+```python
+for s in tagger.senses('다리를 건넜다.'):
+    print(s.content, s.tag, s.sense_no, s.meaning)
+# 다리 NNG 5 물을 건너거나 … 건너다닐 수 있도록 만든 시설물.
+# 건너 VV 1 무엇을 사이에 두고 한편에서 맞은편으로 가다.
+
+for s in tagger.senses('다리가 저리다.'):
+    print(s.content, s.sense_no, s.meaning)
+# 다리 1 사람이나 동물의 몸통 아래 붙어 있는 신체의 부분. …
+```
+
+`SenseInfo` 는 다음 값을 담습니다.
+
+| 필드 | 설명 |
+|---|---|
+| `content` / `tag` | 형태소의 표층형과 품사 |
+| `sense_no` | 어깨번호(우리말샘 기준 의미 번호). 사전 표기로는 3자리 0채움(`005`) |
+| `meaning` | 한국어 뜻풀이. **빈 문자열일 수 있습니다**(우리말샘에 표제어가 없는 1% 미만) |
+| `urimal_target_id` / `urimal_url` | 우리말샘 표제어 번호와 그 사전 화면 주소(없으면 0 / 빈 문자열) |
+| `probability` | 후보 의미 중 이 의미를 고른 확률 `[0,1]`. 후보가 하나뿐이면 항상 1.0 |
+
+기존 메서드에 옵션으로 켤 수도 있습니다.
+
+```python
+# 분석 결과 전체를 받고, 그 안에서 의미만 꺼내기
+res = tagger.tag('다리를 건넜다.', with_sense=True)
+print(res.senses())                      # SenseInfo 목록
+print(res.pos(join=True, sense=True))    # ['다리__005/NNG', '를/JKO', '건너__001/VV', ...]
+print(res.pos(sense=True))               # [('다리','NNG',5), ('를','JKO',0), ...]
+
+# 여러 문장·원시 분석에서도 동일하게 동작합니다.
+tagger.tags(['다리를 건넜다.', '다리가 저리다.'], with_sense=True)
+tagger.taglist(['다리를 건넜다.'], with_sense=True)
+tagger.tag_raw('다리를건넜다', with_sense=True)
+```
+
+> **베타 안내** — 의미 구분은 베타 기능이며 **바른 3.1.0** 이상 서버가 필요합니다(현재 api.bareun.ai 에서 사용 가능).
+> 명사와 문맥 단서가 분명한 문장에서 잘 동작하고, 동사·형용사나 한 문장에 같은 표기가 여러 번 나오는 경우에는 오류가 있을 수 있습니다.
+> 의미가 없는 형태소(조사·어미 등)는 `senses()` 결과에 나오지 않으며, `with_sense` 를 켜지 않으면 응답·처리 시간이 종전과 동일합니다.
+
 ### 분석 옵션
 
 `tag()`, `tags()`, `taglist()` 메서드에서 다음 옵션을 사용할 수 있습니다.
@@ -128,6 +181,7 @@ res = tagger.tag_raw('나는밥을먹었다. 그리고잤다.', auto_split=True)
 | `auto_split` | bool | `False` | 문장 자동 분리 (`tag`, `tags`만 해당) |
 | `auto_spacing` | bool | `True` | 띄어쓰기 보정 |
 | `auto_jointing` | bool | `True` | 붙여쓰기 보정 |
+| `with_sense` | bool | `False` | 동형이의어 의미 구분(WSD, 베타) 결과 포함 — `tag_raw()` 에서도 사용 가능 |
 
 ```python
 res = tagger.tag('햇빛이선명하게나뭇잎을핥고있었다', auto_spacing=True, auto_jointing=True)
