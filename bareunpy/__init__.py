@@ -31,6 +31,9 @@ Tagged
 SenseInfo
     동형이의어 의미 구분(WSD, 베타) 결과 한 건
     `from bareunpy import SenseInfo`
+TruncationInfo
+    긴 요청이 앞부분만 처리됐을 때의 정보(처리·버린 글자 수, 안내 문구)
+    `from bareunpy import TruncationInfo`
 CustomDict
     Custom dictionary for Korean.
     `from bareunpy import CustomDict`
@@ -55,6 +58,7 @@ import os
 from bareunpy._tagger import Tagger, Tagged, SenseInfo
 from bareunpy._tokenizer import Tokenizer, Tokenized
 from bareunpy._corrector import Corrector
+from bareunpy._truncation import TruncationInfo
 from bareunpy._custom_dict import CustomDict
 from bareunpy._custom_dict_client import CustomDictionaryServiceClient
 from bareunpy._lang_service_client import BareunLanguageServiceClient

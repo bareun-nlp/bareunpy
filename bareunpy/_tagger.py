@@ -7,6 +7,7 @@ from typing import IO, List, NamedTuple, Optional, Union
 from google.protobuf.json_format import MessageToDict
 from bareunpy._custom_dict import CustomDict
 from bareunpy._lang_service_client import BareunLanguageServiceClient
+from bareunpy._truncation import TruncationMixin
 from bareunpy.bareun.language_service_pb2 import AnalyzeSyntaxResponse, AnalyzeSyntaxListResponse, Morpheme, Sentence, Token
 
 
@@ -60,10 +61,13 @@ def _resolve_port(host: str, port: Optional[int]) -> int:
         else:
             return 5656
 
-class Tagged:
+class Tagged(TruncationMixin):
     """
     Tagged result.
     It has various output manipulations.
+
+    요청 글이 서버 기준(운영 서버 9,000자)보다 길면 앞부분만 분석됩니다. 이때
+    :meth:`is_truncated`, :meth:`truncation`, :meth:`dropped_text` 로 처리 범위를 확인합니다.
     """
 
     def __init__(self, phrase: Union[str, List[str]], res: Union[AnalyzeSyntaxResponse, AnalyzeSyntaxListResponse]):

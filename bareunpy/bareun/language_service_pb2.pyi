@@ -195,14 +195,16 @@ class AnalyzeSyntaxRequest(_message.Message):
     def __init__(self, document: _Optional[_Union[_lang_common_pb2.Document, _Mapping]] = ..., encoding_type: _Optional[_Union[_lang_common_pb2.EncodingType, str]] = ..., auto_split_sentence: _Optional[bool] = ..., custom_domain: _Optional[str] = ..., auto_spacing: _Optional[bool] = ..., auto_jointing: _Optional[bool] = ..., with_sense: _Optional[bool] = ..., custom_dict_names: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class AnalyzeSyntaxResponse(_message.Message):
-    __slots__ = ("sentences", "language", "tokens_count")
+    __slots__ = ("sentences", "language", "tokens_count", "truncation")
     SENTENCES_FIELD_NUMBER: _ClassVar[int]
     LANGUAGE_FIELD_NUMBER: _ClassVar[int]
     TOKENS_COUNT_FIELD_NUMBER: _ClassVar[int]
+    TRUNCATION_FIELD_NUMBER: _ClassVar[int]
     sentences: _containers.RepeatedCompositeFieldContainer[Sentence]
     language: str
     tokens_count: int
-    def __init__(self, sentences: _Optional[_Iterable[_Union[Sentence, _Mapping]]] = ..., language: _Optional[str] = ..., tokens_count: _Optional[int] = ...) -> None: ...
+    truncation: _lang_common_pb2.Truncation
+    def __init__(self, sentences: _Optional[_Iterable[_Union[Sentence, _Mapping]]] = ..., language: _Optional[str] = ..., tokens_count: _Optional[int] = ..., truncation: _Optional[_Union[_lang_common_pb2.Truncation, _Mapping]] = ...) -> None: ...
 
 class AnalyzeSyntaxRawRequest(_message.Message):
     __slots__ = ("document", "encoding_type", "auto_split_sentence", "with_sense")
@@ -237,14 +239,18 @@ class AnalyzeSyntaxListRequest(_message.Message):
     def __init__(self, sentences: _Optional[_Iterable[str]] = ..., language: _Optional[str] = ..., encoding_type: _Optional[_Union[_lang_common_pb2.EncodingType, str]] = ..., custom_domain: _Optional[str] = ..., auto_spacing: _Optional[bool] = ..., auto_jointing: _Optional[bool] = ..., with_sense: _Optional[bool] = ..., custom_dict_names: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class AnalyzeSyntaxListResponse(_message.Message):
-    __slots__ = ("sentences", "language", "tokens_count")
+    __slots__ = ("sentences", "language", "tokens_count", "truncation", "dropped_begin_sentence_index")
     SENTENCES_FIELD_NUMBER: _ClassVar[int]
     LANGUAGE_FIELD_NUMBER: _ClassVar[int]
     TOKENS_COUNT_FIELD_NUMBER: _ClassVar[int]
+    TRUNCATION_FIELD_NUMBER: _ClassVar[int]
+    DROPPED_BEGIN_SENTENCE_INDEX_FIELD_NUMBER: _ClassVar[int]
     sentences: _containers.RepeatedCompositeFieldContainer[Sentence]
     language: str
     tokens_count: int
-    def __init__(self, sentences: _Optional[_Iterable[_Union[Sentence, _Mapping]]] = ..., language: _Optional[str] = ..., tokens_count: _Optional[int] = ...) -> None: ...
+    truncation: _lang_common_pb2.Truncation
+    dropped_begin_sentence_index: int
+    def __init__(self, sentences: _Optional[_Iterable[_Union[Sentence, _Mapping]]] = ..., language: _Optional[str] = ..., tokens_count: _Optional[int] = ..., truncation: _Optional[_Union[_lang_common_pb2.Truncation, _Mapping]] = ..., dropped_begin_sentence_index: _Optional[int] = ...) -> None: ...
 
 class TokenizeRequest(_message.Message):
     __slots__ = ("document", "encoding_type", "auto_split_sentence", "auto_spacing")
@@ -285,11 +291,13 @@ class SegmentSentence(_message.Message):
     def __init__(self, text: _Optional[_Union[_lang_common_pb2.TextSpan, _Mapping]] = ..., tokens: _Optional[_Iterable[_Union[SegmentToken, _Mapping]]] = ...) -> None: ...
 
 class TokenizeResponse(_message.Message):
-    __slots__ = ("sentences", "language", "tokens_count")
+    __slots__ = ("sentences", "language", "tokens_count", "truncation")
     SENTENCES_FIELD_NUMBER: _ClassVar[int]
     LANGUAGE_FIELD_NUMBER: _ClassVar[int]
     TOKENS_COUNT_FIELD_NUMBER: _ClassVar[int]
+    TRUNCATION_FIELD_NUMBER: _ClassVar[int]
     sentences: _containers.RepeatedCompositeFieldContainer[SegmentSentence]
     language: str
     tokens_count: int
-    def __init__(self, sentences: _Optional[_Iterable[_Union[SegmentSentence, _Mapping]]] = ..., language: _Optional[str] = ..., tokens_count: _Optional[int] = ...) -> None: ...
+    truncation: _lang_common_pb2.Truncation
+    def __init__(self, sentences: _Optional[_Iterable[_Union[SegmentSentence, _Mapping]]] = ..., language: _Optional[str] = ..., tokens_count: _Optional[int] = ..., truncation: _Optional[_Union[_lang_common_pb2.Truncation, _Mapping]] = ...) -> None: ...

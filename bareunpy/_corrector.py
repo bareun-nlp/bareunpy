@@ -8,6 +8,7 @@ import bareunpy.bareun.revision_service_pb2 as pb
 import bareunpy.bareun.lang_common_pb2 as lpb
 from ._revision_service_client import BareunRevisionServiceClient
 from bareunpy._tagger import _resolve_port
+from bareunpy._truncation import TruncationInfo, truncation_of
 
 
 class Corrector:
@@ -140,6 +141,27 @@ class Corrector:
         """내부 세션을 닫습니다(선택)."""
         self.client.close()
 
+    @staticmethod
+    def is_truncated(res: Union[pb.CorrectErrorResponse, pb.StreamFirstCorrectError]) -> bool:
+        """요청 글이 길어 앞부분만 교정됐으면 True.
+
+        서버는 기준(운영 서버 9,000자)을 넘는 글을 거절하지 않고 앞부분만 교정합니다.
+        스트리밍이면 ``first`` 응답(``res.first``)을 넘깁니다.
+        """
+        return truncation_of(res) is not None
+
+    @staticmethod
+    def truncation(res: Union[pb.CorrectErrorResponse, pb.StreamFirstCorrectError]) -> Optional[TruncationInfo]:
+        """잘림 정보(처리한 글자 수, 버린 글자 수, 안내 문구 등). 잘리지 않았으면 None.
+
+        .. code-block:: python
+            >>> res = corrector.correct_error(very_long_text)
+            >>> t = Corrector.truncation(res)
+            >>> if t:
+            ...     rest = t.dropped_text(very_long_text)  # 교정되지 않은 뒷부분
+        """
+        return truncation_of(res)
+
     def print_results(self, res: pb.CorrectErrorResponse, out: IO = stdout) -> None:
         """
         교정 결과를 출력
@@ -150,6 +172,10 @@ class Corrector:
         """
         print(f'원문: {res.origin}', file=out)
         print(f'교정: {res.revised}', file=out)
+
+        t = truncation_of(res)
+        if t is not None:
+            print(f'[주의] {t.message}', file=out)
 
         print("\n=== 교정된 문장들 ===", file=out)
 

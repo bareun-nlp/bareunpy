@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x18\x62\x61reun/lang_common.proto\x12\x06\x62\x61reun\"_\n\x08TextSpan\x12\x18\n\x07\x63ontent\x18\x01 \x01(\tR\x07\x63ontent\x12!\n\x0c\x62\x65gin_offset\x18\x02 \x01(\x05R\x0b\x62\x65ginOffset\x12\x16\n\x06length\x18\x03 \x01(\x05R\x06length\"@\n\x08\x44ocument\x12\x18\n\x07\x63ontent\x18\x02 \x01(\tR\x07\x63ontent\x12\x1a\n\x08language\x18\x04 \x01(\tR\x08language*8\n\x0c\x45ncodingType\x12\x08\n\x04NONE\x10\x00\x12\x08\n\x04UTF8\x10\x01\x12\t\n\x05UTF16\x10\x02\x12\t\n\x05UTF32\x10\x03\x42P\n\x10\x61i.bareun.protosB\x0fLangCommonProtoP\x01Z)bareun.ai/lang/bareun/genproto/bareun;svcb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x18\x62\x61reun/lang_common.proto\x12\x06\x62\x61reun\"_\n\x08TextSpan\x12\x18\n\x07\x63ontent\x18\x01 \x01(\tR\x07\x63ontent\x12!\n\x0c\x62\x65gin_offset\x18\x02 \x01(\x05R\x0b\x62\x65ginOffset\x12\x16\n\x06length\x18\x03 \x01(\x05R\x06length\"\xef\x01\n\nTruncation\x12%\n\x0eoriginal_chars\x18\x01 \x01(\x05R\roriginalChars\x12\'\n\x0fprocessed_chars\x18\x02 \x01(\x05R\x0eprocessedChars\x12#\n\rdropped_chars\x18\x03 \x01(\x05R\x0c\x64roppedChars\x12\x30\n\x14\x64ropped_begin_offset\x18\x04 \x01(\x05R\x12\x64roppedBeginOffset\x12\x18\n\x07message\x18\x05 \x01(\tR\x07message\x12 \n\x0c\x63ut_mid_word\x18\x06 \x01(\x08R\ncutMidWord\"@\n\x08\x44ocument\x12\x18\n\x07\x63ontent\x18\x02 \x01(\tR\x07\x63ontent\x12\x1a\n\x08language\x18\x04 \x01(\tR\x08language*8\n\x0c\x45ncodingType\x12\x08\n\x04NONE\x10\x00\x12\x08\n\x04UTF8\x10\x01\x12\t\n\x05UTF16\x10\x02\x12\t\n\x05UTF32\x10\x03\x42P\n\x10\x61i.bareun.protosB\x0fLangCommonProtoP\x01Z)bareun.ai/lang/bareun/genproto/bareun;svcb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -32,10 +32,12 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'bareun.lang_common_pb2', _g
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'\n\020ai.bareun.protosB\017LangCommonProtoP\001Z)bareun.ai/lang/bareun/genproto/bareun;svc'
-  _globals['_ENCODINGTYPE']._serialized_start=199
-  _globals['_ENCODINGTYPE']._serialized_end=255
+  _globals['_ENCODINGTYPE']._serialized_start=441
+  _globals['_ENCODINGTYPE']._serialized_end=497
   _globals['_TEXTSPAN']._serialized_start=36
   _globals['_TEXTSPAN']._serialized_end=131
-  _globals['_DOCUMENT']._serialized_start=133
-  _globals['_DOCUMENT']._serialized_end=197
+  _globals['_TRUNCATION']._serialized_start=134
+  _globals['_TRUNCATION']._serialized_end=373
+  _globals['_DOCUMENT']._serialized_start=375
+  _globals['_DOCUMENT']._serialized_end=439
 # @@protoc_insertion_point(module_scope)

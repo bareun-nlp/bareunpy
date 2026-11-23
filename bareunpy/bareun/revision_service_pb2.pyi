@@ -163,7 +163,7 @@ class CleanUpRange(_message.Message):
     def __init__(self, offset: _Optional[int] = ..., length: _Optional[int] = ..., position: _Optional[_Union[CleanUpRange.CleanUpPosition, str]] = ...) -> None: ...
 
 class CorrectErrorResponse(_message.Message):
-    __slots__ = ("origin", "revised", "revised_blocks", "whitespace_cleanup_ranges", "revised_sentences", "helps", "language", "tokens_count")
+    __slots__ = ("origin", "revised", "revised_blocks", "whitespace_cleanup_ranges", "revised_sentences", "helps", "language", "tokens_count", "truncation")
     class HelpsEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -179,6 +179,7 @@ class CorrectErrorResponse(_message.Message):
     HELPS_FIELD_NUMBER: _ClassVar[int]
     LANGUAGE_FIELD_NUMBER: _ClassVar[int]
     TOKENS_COUNT_FIELD_NUMBER: _ClassVar[int]
+    TRUNCATION_FIELD_NUMBER: _ClassVar[int]
     origin: str
     revised: str
     revised_blocks: _containers.RepeatedCompositeFieldContainer[RevisedBlock]
@@ -187,7 +188,8 @@ class CorrectErrorResponse(_message.Message):
     helps: _containers.MessageMap[str, ReviseHelp]
     language: str
     tokens_count: int
-    def __init__(self, origin: _Optional[str] = ..., revised: _Optional[str] = ..., revised_blocks: _Optional[_Iterable[_Union[RevisedBlock, _Mapping]]] = ..., whitespace_cleanup_ranges: _Optional[_Iterable[_Union[CleanUpRange, _Mapping]]] = ..., revised_sentences: _Optional[_Iterable[_Union[RevisedSentence, _Mapping]]] = ..., helps: _Optional[_Mapping[str, ReviseHelp]] = ..., language: _Optional[str] = ..., tokens_count: _Optional[int] = ...) -> None: ...
+    truncation: _lang_common_pb2.Truncation
+    def __init__(self, origin: _Optional[str] = ..., revised: _Optional[str] = ..., revised_blocks: _Optional[_Iterable[_Union[RevisedBlock, _Mapping]]] = ..., whitespace_cleanup_ranges: _Optional[_Iterable[_Union[CleanUpRange, _Mapping]]] = ..., revised_sentences: _Optional[_Iterable[_Union[RevisedSentence, _Mapping]]] = ..., helps: _Optional[_Mapping[str, ReviseHelp]] = ..., language: _Optional[str] = ..., tokens_count: _Optional[int] = ..., truncation: _Optional[_Union[_lang_common_pb2.Truncation, _Mapping]] = ...) -> None: ...
 
 class StreamCorrectErrorRequest(_message.Message):
     __slots__ = ("document", "encoding_type", "custom_domain", "custom_dict_names", "config", "req_id")
@@ -206,7 +208,7 @@ class StreamCorrectErrorRequest(_message.Message):
     def __init__(self, document: _Optional[_Union[_lang_common_pb2.Document, _Mapping]] = ..., encoding_type: _Optional[_Union[_lang_common_pb2.EncodingType, str]] = ..., custom_domain: _Optional[str] = ..., custom_dict_names: _Optional[_Iterable[str]] = ..., config: _Optional[_Union[RevisionConfig, _Mapping]] = ..., req_id: _Optional[int] = ...) -> None: ...
 
 class StreamFirstCorrectError(_message.Message):
-    __slots__ = ("origin", "revised", "revised_blocks", "whitespace_cleanup_ranges", "revised_sentences", "helps", "language", "tokens_count", "req_id", "thinking_ids")
+    __slots__ = ("origin", "revised", "revised_blocks", "whitespace_cleanup_ranges", "revised_sentences", "helps", "language", "tokens_count", "truncation", "req_id", "thinking_ids")
     class HelpsEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -222,6 +224,7 @@ class StreamFirstCorrectError(_message.Message):
     HELPS_FIELD_NUMBER: _ClassVar[int]
     LANGUAGE_FIELD_NUMBER: _ClassVar[int]
     TOKENS_COUNT_FIELD_NUMBER: _ClassVar[int]
+    TRUNCATION_FIELD_NUMBER: _ClassVar[int]
     REQ_ID_FIELD_NUMBER: _ClassVar[int]
     THINKING_IDS_FIELD_NUMBER: _ClassVar[int]
     origin: str
@@ -232,9 +235,10 @@ class StreamFirstCorrectError(_message.Message):
     helps: _containers.MessageMap[str, ReviseHelp]
     language: str
     tokens_count: int
+    truncation: _lang_common_pb2.Truncation
     req_id: int
     thinking_ids: _containers.RepeatedScalarFieldContainer[int]
-    def __init__(self, origin: _Optional[str] = ..., revised: _Optional[str] = ..., revised_blocks: _Optional[_Iterable[_Union[RevisedBlock, _Mapping]]] = ..., whitespace_cleanup_ranges: _Optional[_Iterable[_Union[CleanUpRange, _Mapping]]] = ..., revised_sentences: _Optional[_Iterable[_Union[RevisedSentence, _Mapping]]] = ..., helps: _Optional[_Mapping[str, ReviseHelp]] = ..., language: _Optional[str] = ..., tokens_count: _Optional[int] = ..., req_id: _Optional[int] = ..., thinking_ids: _Optional[_Iterable[int]] = ...) -> None: ...
+    def __init__(self, origin: _Optional[str] = ..., revised: _Optional[str] = ..., revised_blocks: _Optional[_Iterable[_Union[RevisedBlock, _Mapping]]] = ..., whitespace_cleanup_ranges: _Optional[_Iterable[_Union[CleanUpRange, _Mapping]]] = ..., revised_sentences: _Optional[_Iterable[_Union[RevisedSentence, _Mapping]]] = ..., helps: _Optional[_Mapping[str, ReviseHelp]] = ..., language: _Optional[str] = ..., tokens_count: _Optional[int] = ..., truncation: _Optional[_Union[_lang_common_pb2.Truncation, _Mapping]] = ..., req_id: _Optional[int] = ..., thinking_ids: _Optional[_Iterable[int]] = ...) -> None: ...
 
 class CancelledRevision(_message.Message):
     __slots__ = ("req_id", "thinking_id")
