@@ -8,6 +8,15 @@
 
 ## 변경사항
 
+### 2.2.0
+
+- **긴 글 요청의 잘림(truncation) 응답 지원**: 서버는 요청 글이 기준(운영 서버 `api.bareun.ai` 는 9,000자)을 넘으면 거절하지 않고 앞부분(5,000자 안팎)만 처리하고, 버린 부분을 응답으로 알립니다. 이제 이 정보를 읽을 수 있습니다.
+  - `Tagged` / `Tokenized`: `is_truncated()`, `truncation()`, `dropped_text()`
+  - `Corrector`: `Corrector.is_truncated(res)`, `Corrector.truncation(res)`, `print_results()` 가 안내 문구를 함께 출력
+  - `TruncationInfo`: 요청 글 전체·처리한·버린 글자 수, 버린 구간의 시작 위치, 안내 문구, 글자 중간에서 잘랐는지
+  - 새 메서드만 더했습니다. **기존 코드의 동작은 그대로**이고, 잘리지 않은 응답에는 정보가 없습니다(`None`).
+  - 서버 쪽에서 긴 요청 자르기를 지원해야 정보가 옵니다. 지원하지 않는 서버는 길면 거절하거나 그대로 처리합니다(`None`).
+
 ### 2.1.0
 
 - **동형이의어 의미 구분(WSD) API 추가 — 베타**: 표기·품사가 같은데 뜻이 다른 단어(`다리`(橋)/`다리`(脚))를 문맥으로 구분합니다.
@@ -301,6 +310,44 @@ for res in corrector.correct_error_stream("영수 도 줄기가 얇어서 시들
     elif kind == "cancelled":
         print("취소:", res.cancelled.thinking_id)
 ```
+
+### 긴 글 처리와 잘림 확인
+
+한 번에 보낼 수 있는 글이 서버 기준(운영 서버 `api.bareun.ai` 는 **9,000자**)을 넘으면 서버는
+요청을 거절하지 않고 **앞부분(5,000자 안팎, 문장 끝 → 공백 순으로 끊을 자리를 찾음)만 처리**합니다.
+뒷부분은 처리되지 않으며, 형태소 분석·토크나이징·맞춤법 교정 모두 같습니다. 글자 수는 한글 한 글자,
+영문 한 자, 공백, 줄바꿈이 각각 한 글자입니다. 9,000자까지는 전부 처리되고 9,001자부터 잘립니다.
+자체 서버는 설정에 따라 기준이 다르거나 자르지 않을 수 있습니다.
+
+응답 좌표(`begin_offset` 등)는 잘려도 요청 글의 처음 기준 그대로입니다. 잘렸는지는 응답으로 확인합니다.
+
+```python
+from bareunpy import Corrector, Tagger, Tokenizer
+
+text = "..."  # 9,001자 이상의 긴 글
+
+tagged = Tagger(API_KEY).tag(text)
+if tagged.is_truncated():
+    t = tagged.truncation()
+    print(t.original_chars)    # 요청 글 전체 글자 수
+    print(t.processed_chars)   # 처리한 글자 수
+    print(t.dropped_chars)     # 버린 글자 수
+    print(t.message)           # 서버 안내 문구
+    print(t.cut_mid_word)      # True 면 글자 중간에서 잘라 마지막 어절을 믿기 어려움
+    rest = tagged.dropped_text()   # 처리되지 않은 뒷부분 원문
+
+# 토크나이저도 같습니다: Tokenizer(API_KEY).tokenize(text).truncation()
+
+# 교정기는 응답을 넘깁니다. 스트리밍이면 first 응답을 넘깁니다.
+res = Corrector(API_KEY).correct_error(text)
+t = Corrector.truncation(res)          # 잘리지 않았으면 None
+if t:
+    rest = t.dropped_text(text)        # 교정되지 않은 뒷부분
+```
+
+뒷부분까지 처리하려면 `dropped_text()` 로 받은 나머지를 다시 요청하면 됩니다. `taglist()` 는
+문장 목록 요청이라 `t.dropped_begin_sentence_index` 번째 문장부터 처리되지 않았고, 그보다 앞
+문장은 모두 처리됩니다(응답의 문장 수는 요청과 같고, 처리되지 않은 문장은 빈 문장으로 채워집니다).
 
 ---
 
