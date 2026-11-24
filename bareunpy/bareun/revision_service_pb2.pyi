@@ -33,6 +33,11 @@ class CustomDictPos(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     POS_MM: _ClassVar[CustomDictPos]
     POS_MAG: _ClassVar[CustomDictPos]
     POS_IC: _ClassVar[CustomDictPos]
+
+class SessionEventKind(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
+    __slots__ = ()
+    SESSION_EVENT_KIND_UNKNOWN: _ClassVar[SessionEventKind]
+    SESSION_EVENT_KIND_WORD_CONFIRMED: _ClassVar[SessionEventKind]
 UNKNOWN: RevisionCategory
 GRAMMER: RevisionCategory
 WORD: RevisionCategory
@@ -53,9 +58,11 @@ POS_VA: CustomDictPos
 POS_MM: CustomDictPos
 POS_MAG: CustomDictPos
 POS_IC: CustomDictPos
+SESSION_EVENT_KIND_UNKNOWN: SessionEventKind
+SESSION_EVENT_KIND_WORD_CONFIRMED: SessionEventKind
 
 class RevisionConfig(_message.Message):
-    __slots__ = ("disable_split_sentence", "disable_caret_spacing", "disable_vx_spacing", "treat_as_title", "enable_limited_punctuation", "disable_confusion", "enable_cleanup_whitespace", "disable_typo_correction", "enable_sentence_check")
+    __slots__ = ("disable_split_sentence", "disable_caret_spacing", "disable_vx_spacing", "treat_as_title", "enable_limited_punctuation", "disable_confusion", "enable_cleanup_whitespace", "disable_typo_correction", "enable_sentence_check", "enable_public_term_refine", "enable_contested_fix", "disable_bias_check", "disable_single_quote_correction")
     DISABLE_SPLIT_SENTENCE_FIELD_NUMBER: _ClassVar[int]
     DISABLE_CARET_SPACING_FIELD_NUMBER: _ClassVar[int]
     DISABLE_VX_SPACING_FIELD_NUMBER: _ClassVar[int]
@@ -65,6 +72,10 @@ class RevisionConfig(_message.Message):
     ENABLE_CLEANUP_WHITESPACE_FIELD_NUMBER: _ClassVar[int]
     DISABLE_TYPO_CORRECTION_FIELD_NUMBER: _ClassVar[int]
     ENABLE_SENTENCE_CHECK_FIELD_NUMBER: _ClassVar[int]
+    ENABLE_PUBLIC_TERM_REFINE_FIELD_NUMBER: _ClassVar[int]
+    ENABLE_CONTESTED_FIX_FIELD_NUMBER: _ClassVar[int]
+    DISABLE_BIAS_CHECK_FIELD_NUMBER: _ClassVar[int]
+    DISABLE_SINGLE_QUOTE_CORRECTION_FIELD_NUMBER: _ClassVar[int]
     disable_split_sentence: bool
     disable_caret_spacing: bool
     disable_vx_spacing: bool
@@ -74,21 +85,27 @@ class RevisionConfig(_message.Message):
     enable_cleanup_whitespace: bool
     disable_typo_correction: bool
     enable_sentence_check: bool
-    def __init__(self, disable_split_sentence: _Optional[bool] = ..., disable_caret_spacing: _Optional[bool] = ..., disable_vx_spacing: _Optional[bool] = ..., treat_as_title: _Optional[bool] = ..., enable_limited_punctuation: _Optional[bool] = ..., disable_confusion: _Optional[bool] = ..., enable_cleanup_whitespace: _Optional[bool] = ..., disable_typo_correction: _Optional[bool] = ..., enable_sentence_check: _Optional[bool] = ...) -> None: ...
+    enable_public_term_refine: bool
+    enable_contested_fix: bool
+    disable_bias_check: bool
+    disable_single_quote_correction: bool
+    def __init__(self, disable_split_sentence: _Optional[bool] = ..., disable_caret_spacing: _Optional[bool] = ..., disable_vx_spacing: _Optional[bool] = ..., treat_as_title: _Optional[bool] = ..., enable_limited_punctuation: _Optional[bool] = ..., disable_confusion: _Optional[bool] = ..., enable_cleanup_whitespace: _Optional[bool] = ..., disable_typo_correction: _Optional[bool] = ..., enable_sentence_check: _Optional[bool] = ..., enable_public_term_refine: _Optional[bool] = ..., enable_contested_fix: _Optional[bool] = ..., disable_bias_check: _Optional[bool] = ..., disable_single_quote_correction: _Optional[bool] = ...) -> None: ...
 
 class CorrectErrorRequest(_message.Message):
-    __slots__ = ("document", "encoding_type", "custom_domain", "custom_dict_names", "config")
+    __slots__ = ("document", "encoding_type", "custom_domain", "custom_dict_names", "config", "session_id")
     DOCUMENT_FIELD_NUMBER: _ClassVar[int]
     ENCODING_TYPE_FIELD_NUMBER: _ClassVar[int]
     CUSTOM_DOMAIN_FIELD_NUMBER: _ClassVar[int]
     CUSTOM_DICT_NAMES_FIELD_NUMBER: _ClassVar[int]
     CONFIG_FIELD_NUMBER: _ClassVar[int]
+    SESSION_ID_FIELD_NUMBER: _ClassVar[int]
     document: _lang_common_pb2.Document
     encoding_type: _lang_common_pb2.EncodingType
     custom_domain: str
     custom_dict_names: _containers.RepeatedScalarFieldContainer[str]
     config: RevisionConfig
-    def __init__(self, document: _Optional[_Union[_lang_common_pb2.Document, _Mapping]] = ..., encoding_type: _Optional[_Union[_lang_common_pb2.EncodingType, str]] = ..., custom_domain: _Optional[str] = ..., custom_dict_names: _Optional[_Iterable[str]] = ..., config: _Optional[_Union[RevisionConfig, _Mapping]] = ...) -> None: ...
+    session_id: str
+    def __init__(self, document: _Optional[_Union[_lang_common_pb2.Document, _Mapping]] = ..., encoding_type: _Optional[_Union[_lang_common_pb2.EncodingType, str]] = ..., custom_domain: _Optional[str] = ..., custom_dict_names: _Optional[_Iterable[str]] = ..., config: _Optional[_Union[RevisionConfig, _Mapping]] = ..., session_id: _Optional[str] = ...) -> None: ...
 
 class ReviseHelp(_message.Message):
     __slots__ = ("id", "category", "comment", "examples", "rule_article")
@@ -163,7 +180,7 @@ class CleanUpRange(_message.Message):
     def __init__(self, offset: _Optional[int] = ..., length: _Optional[int] = ..., position: _Optional[_Union[CleanUpRange.CleanUpPosition, str]] = ...) -> None: ...
 
 class CorrectErrorResponse(_message.Message):
-    __slots__ = ("origin", "revised", "revised_blocks", "whitespace_cleanup_ranges", "revised_sentences", "helps", "language", "tokens_count", "truncation")
+    __slots__ = ("origin", "revised", "revised_blocks", "whitespace_cleanup_ranges", "revised_sentences", "helps", "language", "tokens_count", "session_revision", "truncation")
     class HelpsEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -179,6 +196,7 @@ class CorrectErrorResponse(_message.Message):
     HELPS_FIELD_NUMBER: _ClassVar[int]
     LANGUAGE_FIELD_NUMBER: _ClassVar[int]
     TOKENS_COUNT_FIELD_NUMBER: _ClassVar[int]
+    SESSION_REVISION_FIELD_NUMBER: _ClassVar[int]
     TRUNCATION_FIELD_NUMBER: _ClassVar[int]
     origin: str
     revised: str
@@ -188,27 +206,30 @@ class CorrectErrorResponse(_message.Message):
     helps: _containers.MessageMap[str, ReviseHelp]
     language: str
     tokens_count: int
+    session_revision: int
     truncation: _lang_common_pb2.Truncation
-    def __init__(self, origin: _Optional[str] = ..., revised: _Optional[str] = ..., revised_blocks: _Optional[_Iterable[_Union[RevisedBlock, _Mapping]]] = ..., whitespace_cleanup_ranges: _Optional[_Iterable[_Union[CleanUpRange, _Mapping]]] = ..., revised_sentences: _Optional[_Iterable[_Union[RevisedSentence, _Mapping]]] = ..., helps: _Optional[_Mapping[str, ReviseHelp]] = ..., language: _Optional[str] = ..., tokens_count: _Optional[int] = ..., truncation: _Optional[_Union[_lang_common_pb2.Truncation, _Mapping]] = ...) -> None: ...
+    def __init__(self, origin: _Optional[str] = ..., revised: _Optional[str] = ..., revised_blocks: _Optional[_Iterable[_Union[RevisedBlock, _Mapping]]] = ..., whitespace_cleanup_ranges: _Optional[_Iterable[_Union[CleanUpRange, _Mapping]]] = ..., revised_sentences: _Optional[_Iterable[_Union[RevisedSentence, _Mapping]]] = ..., helps: _Optional[_Mapping[str, ReviseHelp]] = ..., language: _Optional[str] = ..., tokens_count: _Optional[int] = ..., session_revision: _Optional[int] = ..., truncation: _Optional[_Union[_lang_common_pb2.Truncation, _Mapping]] = ...) -> None: ...
 
 class StreamCorrectErrorRequest(_message.Message):
-    __slots__ = ("document", "encoding_type", "custom_domain", "custom_dict_names", "config", "req_id")
+    __slots__ = ("document", "encoding_type", "custom_domain", "custom_dict_names", "config", "session_id", "req_id")
     DOCUMENT_FIELD_NUMBER: _ClassVar[int]
     ENCODING_TYPE_FIELD_NUMBER: _ClassVar[int]
     CUSTOM_DOMAIN_FIELD_NUMBER: _ClassVar[int]
     CUSTOM_DICT_NAMES_FIELD_NUMBER: _ClassVar[int]
     CONFIG_FIELD_NUMBER: _ClassVar[int]
+    SESSION_ID_FIELD_NUMBER: _ClassVar[int]
     REQ_ID_FIELD_NUMBER: _ClassVar[int]
     document: _lang_common_pb2.Document
     encoding_type: _lang_common_pb2.EncodingType
     custom_domain: str
     custom_dict_names: _containers.RepeatedScalarFieldContainer[str]
     config: RevisionConfig
+    session_id: str
     req_id: int
-    def __init__(self, document: _Optional[_Union[_lang_common_pb2.Document, _Mapping]] = ..., encoding_type: _Optional[_Union[_lang_common_pb2.EncodingType, str]] = ..., custom_domain: _Optional[str] = ..., custom_dict_names: _Optional[_Iterable[str]] = ..., config: _Optional[_Union[RevisionConfig, _Mapping]] = ..., req_id: _Optional[int] = ...) -> None: ...
+    def __init__(self, document: _Optional[_Union[_lang_common_pb2.Document, _Mapping]] = ..., encoding_type: _Optional[_Union[_lang_common_pb2.EncodingType, str]] = ..., custom_domain: _Optional[str] = ..., custom_dict_names: _Optional[_Iterable[str]] = ..., config: _Optional[_Union[RevisionConfig, _Mapping]] = ..., session_id: _Optional[str] = ..., req_id: _Optional[int] = ...) -> None: ...
 
 class StreamFirstCorrectError(_message.Message):
-    __slots__ = ("origin", "revised", "revised_blocks", "whitespace_cleanup_ranges", "revised_sentences", "helps", "language", "tokens_count", "truncation", "req_id", "thinking_ids")
+    __slots__ = ("origin", "revised", "revised_blocks", "whitespace_cleanup_ranges", "revised_sentences", "helps", "language", "tokens_count", "session_revision", "truncation", "req_id", "thinking_ids")
     class HelpsEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -224,6 +245,7 @@ class StreamFirstCorrectError(_message.Message):
     HELPS_FIELD_NUMBER: _ClassVar[int]
     LANGUAGE_FIELD_NUMBER: _ClassVar[int]
     TOKENS_COUNT_FIELD_NUMBER: _ClassVar[int]
+    SESSION_REVISION_FIELD_NUMBER: _ClassVar[int]
     TRUNCATION_FIELD_NUMBER: _ClassVar[int]
     REQ_ID_FIELD_NUMBER: _ClassVar[int]
     THINKING_IDS_FIELD_NUMBER: _ClassVar[int]
@@ -235,10 +257,11 @@ class StreamFirstCorrectError(_message.Message):
     helps: _containers.MessageMap[str, ReviseHelp]
     language: str
     tokens_count: int
+    session_revision: int
     truncation: _lang_common_pb2.Truncation
     req_id: int
     thinking_ids: _containers.RepeatedScalarFieldContainer[int]
-    def __init__(self, origin: _Optional[str] = ..., revised: _Optional[str] = ..., revised_blocks: _Optional[_Iterable[_Union[RevisedBlock, _Mapping]]] = ..., whitespace_cleanup_ranges: _Optional[_Iterable[_Union[CleanUpRange, _Mapping]]] = ..., revised_sentences: _Optional[_Iterable[_Union[RevisedSentence, _Mapping]]] = ..., helps: _Optional[_Mapping[str, ReviseHelp]] = ..., language: _Optional[str] = ..., tokens_count: _Optional[int] = ..., truncation: _Optional[_Union[_lang_common_pb2.Truncation, _Mapping]] = ..., req_id: _Optional[int] = ..., thinking_ids: _Optional[_Iterable[int]] = ...) -> None: ...
+    def __init__(self, origin: _Optional[str] = ..., revised: _Optional[str] = ..., revised_blocks: _Optional[_Iterable[_Union[RevisedBlock, _Mapping]]] = ..., whitespace_cleanup_ranges: _Optional[_Iterable[_Union[CleanUpRange, _Mapping]]] = ..., revised_sentences: _Optional[_Iterable[_Union[RevisedSentence, _Mapping]]] = ..., helps: _Optional[_Mapping[str, ReviseHelp]] = ..., language: _Optional[str] = ..., tokens_count: _Optional[int] = ..., session_revision: _Optional[int] = ..., truncation: _Optional[_Union[_lang_common_pb2.Truncation, _Mapping]] = ..., req_id: _Optional[int] = ..., thinking_ids: _Optional[_Iterable[int]] = ...) -> None: ...
 
 class CancelledRevision(_message.Message):
     __slots__ = ("req_id", "thinking_id")
@@ -271,13 +294,85 @@ class ProgressRevision(_message.Message):
     def __init__(self, req_id: _Optional[int] = ..., thinking_id: _Optional[int] = ..., thinking_msg: _Optional[str] = ...) -> None: ...
 
 class StreamCorrectErrorResponse(_message.Message):
-    __slots__ = ("first", "cancelled", "post", "progress")
+    __slots__ = ("first", "cancelled", "post", "progress", "session_correction")
     FIRST_FIELD_NUMBER: _ClassVar[int]
     CANCELLED_FIELD_NUMBER: _ClassVar[int]
     POST_FIELD_NUMBER: _ClassVar[int]
     PROGRESS_FIELD_NUMBER: _ClassVar[int]
+    SESSION_CORRECTION_FIELD_NUMBER: _ClassVar[int]
     first: StreamFirstCorrectError
     cancelled: CancelledRevision
     post: PostRevision
     progress: ProgressRevision
-    def __init__(self, first: _Optional[_Union[StreamFirstCorrectError, _Mapping]] = ..., cancelled: _Optional[_Union[CancelledRevision, _Mapping]] = ..., post: _Optional[_Union[PostRevision, _Mapping]] = ..., progress: _Optional[_Union[ProgressRevision, _Mapping]] = ...) -> None: ...
+    session_correction: SessionCorrection
+    def __init__(self, first: _Optional[_Union[StreamFirstCorrectError, _Mapping]] = ..., cancelled: _Optional[_Union[CancelledRevision, _Mapping]] = ..., post: _Optional[_Union[PostRevision, _Mapping]] = ..., progress: _Optional[_Union[ProgressRevision, _Mapping]] = ..., session_correction: _Optional[_Union[SessionCorrection, _Mapping]] = ...) -> None: ...
+
+class SessionCorrection(_message.Message):
+    __slots__ = ("req_id", "session_revision", "events", "reverted")
+    REQ_ID_FIELD_NUMBER: _ClassVar[int]
+    SESSION_REVISION_FIELD_NUMBER: _ClassVar[int]
+    EVENTS_FIELD_NUMBER: _ClassVar[int]
+    REVERTED_FIELD_NUMBER: _ClassVar[int]
+    req_id: int
+    session_revision: int
+    events: _containers.RepeatedCompositeFieldContainer[SessionEvent]
+    reverted: _containers.RepeatedCompositeFieldContainer[_lang_common_pb2.TextSpan]
+    def __init__(self, req_id: _Optional[int] = ..., session_revision: _Optional[int] = ..., events: _Optional[_Iterable[_Union[SessionEvent, _Mapping]]] = ..., reverted: _Optional[_Iterable[_Union[_lang_common_pb2.TextSpan, _Mapping]]] = ...) -> None: ...
+
+class OpenSessionRequest(_message.Message):
+    __slots__ = ("custom_dict_names", "config")
+    CUSTOM_DICT_NAMES_FIELD_NUMBER: _ClassVar[int]
+    CONFIG_FIELD_NUMBER: _ClassVar[int]
+    custom_dict_names: _containers.RepeatedScalarFieldContainer[str]
+    config: RevisionConfig
+    def __init__(self, custom_dict_names: _Optional[_Iterable[str]] = ..., config: _Optional[_Union[RevisionConfig, _Mapping]] = ...) -> None: ...
+
+class OpenSessionResponse(_message.Message):
+    __slots__ = ("session_id", "session_revision", "idle_timeout_seconds", "max_lifetime_seconds")
+    SESSION_ID_FIELD_NUMBER: _ClassVar[int]
+    SESSION_REVISION_FIELD_NUMBER: _ClassVar[int]
+    IDLE_TIMEOUT_SECONDS_FIELD_NUMBER: _ClassVar[int]
+    MAX_LIFETIME_SECONDS_FIELD_NUMBER: _ClassVar[int]
+    session_id: str
+    session_revision: int
+    idle_timeout_seconds: int
+    max_lifetime_seconds: int
+    def __init__(self, session_id: _Optional[str] = ..., session_revision: _Optional[int] = ..., idle_timeout_seconds: _Optional[int] = ..., max_lifetime_seconds: _Optional[int] = ...) -> None: ...
+
+class CloseSessionRequest(_message.Message):
+    __slots__ = ("session_id",)
+    SESSION_ID_FIELD_NUMBER: _ClassVar[int]
+    session_id: str
+    def __init__(self, session_id: _Optional[str] = ...) -> None: ...
+
+class CloseSessionResponse(_message.Message):
+    __slots__ = ("session_revision",)
+    SESSION_REVISION_FIELD_NUMBER: _ClassVar[int]
+    session_revision: int
+    def __init__(self, session_revision: _Optional[int] = ...) -> None: ...
+
+class SessionEvent(_message.Message):
+    __slots__ = ("revision", "kind", "word")
+    REVISION_FIELD_NUMBER: _ClassVar[int]
+    KIND_FIELD_NUMBER: _ClassVar[int]
+    WORD_FIELD_NUMBER: _ClassVar[int]
+    revision: int
+    kind: SessionEventKind
+    word: str
+    def __init__(self, revision: _Optional[int] = ..., kind: _Optional[_Union[SessionEventKind, str]] = ..., word: _Optional[str] = ...) -> None: ...
+
+class GetSessionEventsRequest(_message.Message):
+    __slots__ = ("session_id", "since_revision")
+    SESSION_ID_FIELD_NUMBER: _ClassVar[int]
+    SINCE_REVISION_FIELD_NUMBER: _ClassVar[int]
+    session_id: str
+    since_revision: int
+    def __init__(self, session_id: _Optional[str] = ..., since_revision: _Optional[int] = ...) -> None: ...
+
+class GetSessionEventsResponse(_message.Message):
+    __slots__ = ("session_revision", "events")
+    SESSION_REVISION_FIELD_NUMBER: _ClassVar[int]
+    EVENTS_FIELD_NUMBER: _ClassVar[int]
+    session_revision: int
+    events: _containers.RepeatedCompositeFieldContainer[SessionEvent]
+    def __init__(self, session_revision: _Optional[int] = ..., events: _Optional[_Iterable[_Union[SessionEvent, _Mapping]]] = ...) -> None: ...

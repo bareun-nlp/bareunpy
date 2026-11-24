@@ -10,7 +10,10 @@
 
 ### 2.2.0
 
-- **긴 글 요청의 잘림(truncation) 응답 지원**: 서버는 요청 글이 기준(운영 서버 `api.bareun.ai` 는 9,000자)을 넘으면 거절하지 않고 앞부분(5,000자 안팎)만 처리하고, 버린 부분을 응답으로 알립니다. 이제 이 정보를 읽을 수 있습니다.
+- **교정 세션 지원**: 긴 문서를 여러 번에 나눠 교정할 때 `corrector.open_session()` 으로 세션을 엽니다. 서버가 같은 문서임을 알고 동작해, 앞 호출에서 두 번 이상 나온 미등록 단어를 뒤 호출에서 고치지 않습니다.
+  - `RevisionSession`: `correct_error()`, `correct_error_stream()`, `events()`, `close()`, `with` 문 지원
+  - 서버가 세션을 지원해야 합니다(바른 3.3.1 이상).
+- **긴 글 요청의 잘림(truncation) 응답 지원**: 바른 엔진 자체에는 글자 수 제약이 없지만 클라우드 서비스(`api.bareun.ai`)는 용량 때문에 요청 한 번에 5,000자까지 처리하고, 넘으면 앞부분만 처리한 뒤 버린 부분을 응답으로 알립니다. 이제 이 정보를 읽을 수 있습니다.
   - `Tagged` / `Tokenized`: `is_truncated()`, `truncation()`, `dropped_text()`
   - `Corrector`: `Corrector.is_truncated(res)`, `Corrector.truncation(res)`, `print_results()` 가 안내 문구를 함께 출력
   - `TruncationInfo`: 요청 글 전체·처리한·버린 글자 수, 버린 구간의 시작 위치, 안내 문구, 글자 중간에서 잘랐는지
@@ -313,18 +316,16 @@ for res in corrector.correct_error_stream("영수 도 줄기가 얇어서 시들
 
 ### 긴 글 처리와 잘림 확인
 
-한 번에 보낼 수 있는 글이 서버 기준(운영 서버 `api.bareun.ai` 는 **9,000자**)을 넘으면 서버는
-요청을 거절하지 않고 **앞부분(5,000자 안팎, 문장 끝 → 공백 순으로 끊을 자리를 찾음)만 처리**합니다.
-뒷부분은 처리되지 않으며, 형태소 분석·토크나이징·맞춤법 교정 모두 같습니다. 글자 수는 한글 한 글자,
-영문 한 자, 공백, 줄바꿈이 각각 한 글자입니다. 9,000자까지는 전부 처리되고 9,001자부터 잘립니다.
-자체 서버는 설정에 따라 기준이 다르거나 자르지 않을 수 있습니다.
+바른 엔진 자체에는 글자 수 제약이 없지만, 클라우드 서비스(`api.bareun.ai`)는 용량 때문에 요청 한 번에 처리하는 양을 **5,000자**로 둡니다. 5,000자를 넘는 글은 거절하지 않고 앞부분만 처리하며(문장 끝, 공백 순으로 끊을 자리를 찾아 최대 500자 짧게), 버린 부분을 응답의 `truncation` 필드로 알립니다. 형태소 분석·토크나이징·맞춤법 교정 모두 같습니다. 긴 글은 5,000자 이하씩 나눠 보내세요(교정은 아래 세션을 쓰면 좋습니다). 이 기준은 운영 상황에 따라 바뀔 수 있으니 숫자를 코드에 박지 말고 `truncation` 의 `processed_chars`·`dropped_chars` 로 판단하세요.
+
+글자 수는 한글 한 글자, 영문 한 자, 공백, 줄바꿈이 각각 한 글자입니다. 지금 기준으로 5,000자까지는 전부 처리되고 5,001자부터 잘립니다. 자체 서버(설치형)는 기본으로 제한이 없고 설정으로 기준을 둘 수 있습니다.
 
 응답 좌표(`begin_offset` 등)는 잘려도 요청 글의 처음 기준 그대로입니다. 잘렸는지는 응답으로 확인합니다.
 
 ```python
 from bareunpy import Corrector, Tagger, Tokenizer
 
-text = "..."  # 9,001자 이상의 긴 글
+text = "..."  # 5,001자 이상의 긴 글
 
 tagged = Tagger(API_KEY).tag(text)
 if tagged.is_truncated():
@@ -348,6 +349,34 @@ if t:
 뒷부분까지 처리하려면 `dropped_text()` 로 받은 나머지를 다시 요청하면 됩니다. `taglist()` 는
 문장 목록 요청이라 `t.dropped_begin_sentence_index` 번째 문장부터 처리되지 않았고, 그보다 앞
 문장은 모두 처리됩니다(응답의 문장 수는 요청과 같고, 처리되지 않은 문장은 빈 문장으로 채워집니다).
+
+### 긴 문서는 세션으로 나눠 보내기
+
+교정은 긴 글을 세션(`OpenSession`, `CloseSession`)을 열고 문단 단위로 5,000자 이하씩 나눠 보내세요(세션은 맞춤법 교정에만 있고 형태소 분석에는 없습니다). 세션 안의 요청들은 따로 부르는 `CorrectError` 가 아니라 한 문서로 이어진 것으로 처리되어, 사용자 사전과 옵션이 문단마다 같게 적용되고 앞 문단에서 두 번 이상 나온 사전에 없는 낱말을 뒤 문단에서 오타로 보지 않습니다. 짧은 문단 요청은 서버가 한 번에 쓰는 메모리와 시간이 작아 긴 한 요청보다 안정되게 처리되며, 이는 서버 처리 부담에 관한 설명이고 요금이 달라진다는 뜻은 아닙니다. 5,000자 기준은 세션 안의 각 요청에도 똑같이 걸리고, 바뀔 수 있으니 `truncation` 필드로 판단하세요.
+
+bareunpy 에서는 `corrector.open_session()` 으로 열고 `session.close()` 로 닫습니다(`with` 문이 알아서 닫습니다). 사용자 사전과 교정 설정은 세션을 열 때 정하고 닫을 때까지 바뀌지 않습니다. 세션은 마지막 호출 뒤 10분이 지나거나 열린 지 1시간이 지나면 서버가 닫고, 키당 동시에 열 수 있는 수에 상한이 있으니 끝나면 닫습니다.
+
+```python
+from bareunpy import Corrector
+
+corrector = Corrector(API_KEY)
+text = "..."  # 아주 긴 문서
+
+revised = []
+with corrector.open_session(custom_dicts=["my_dict"]) as session:
+    while text:
+        res = session.correct_error(text)
+        revised.append(res.revised)
+        t = Corrector.truncation(res)               # 잘리지 않았으면 None
+        text = t.dropped_text(text) if t else ""    # 교정되지 않은 뒷부분을 이어서 보냄
+print("".join(revised))
+```
+
+위 예시는 서버가 잘라 알려 주는 뒷부분을 이어 보냅니다. 문서를 직접 문단 단위(5,000자 이하)로 나눠 호출해도 됩니다. 단발 호출(`session.correct_error`)로 앞 답을 받은 뒤
+뒤 호출 때문에 앞 답이 달라졌는지는 `session.events()` 로 확인합니다(`session_revision` 이 올랐으면
+미등록 단어가 새로 확정된 것입니다). 스트리밍(`session.correct_error_stream`)은 같은 정보를
+`session_correction` 응답으로 보내 주고, 되돌릴 구간(`reverted`)의 교정을 취소하면 됩니다. 세션이
+만료되거나 서버가 모르면 `NOT_FOUND` 오류가 나니, 세션을 다시 열고 필요한 앞부분부터 다시 보냅니다.
 
 ---
 

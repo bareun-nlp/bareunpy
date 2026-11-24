@@ -34,6 +34,9 @@ SenseInfo
 TruncationInfo
     긴 요청이 앞부분만 처리됐을 때의 정보(처리·버린 글자 수, 안내 문구)
     `from bareunpy import TruncationInfo`
+RevisionSession
+    긴 문서를 나눠 교정할 때 쓰는 교정 세션(`corrector.open_session()`)
+    `from bareunpy import RevisionSession`
 CustomDict
     Custom dictionary for Korean.
     `from bareunpy import CustomDict`
@@ -59,6 +62,7 @@ from bareunpy._tagger import Tagger, Tagged, SenseInfo
 from bareunpy._tokenizer import Tokenizer, Tokenized
 from bareunpy._corrector import Corrector
 from bareunpy._truncation import TruncationInfo
+from bareunpy._session import RevisionSession
 from bareunpy._custom_dict import CustomDict
 from bareunpy._custom_dict_client import CustomDictionaryServiceClient
 from bareunpy._lang_service_client import BareunLanguageServiceClient

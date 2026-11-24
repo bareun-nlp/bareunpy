@@ -66,7 +66,7 @@ class Tagged(TruncationMixin):
     Tagged result.
     It has various output manipulations.
 
-    요청 글이 서버 기준(운영 서버 9,000자)보다 길면 앞부분만 분석됩니다. 이때
+    요청 글이 서버 기준(클라우드 서비스는 현재 5,000자, 바뀔 수 있음)보다 길면 앞부분만 분석됩니다. 이때
     :meth:`is_truncated`, :meth:`truncation`, :meth:`dropped_text` 로 처리 범위를 확인합니다.
     """
 
