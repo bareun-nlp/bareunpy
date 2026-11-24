@@ -171,7 +171,7 @@ class Corrector:
     def is_truncated(res: Union[pb.CorrectErrorResponse, pb.StreamFirstCorrectError]) -> bool:
         """요청 글이 길어 앞부분만 교정됐으면 True.
 
-        서버는 기준(운영 서버 5,000자)을 넘는 글을 거절하지 않고 앞부분만 교정합니다.
+        서버는 기준(클라우드 서비스는 현재 5,000자, 바뀔 수 있음)을 넘는 글을 거절하지 않고 앞부분만 교정합니다.
         스트리밍이면 ``first`` 응답(``res.first``)을 넘깁니다.
         """
         return truncation_of(res) is not None
