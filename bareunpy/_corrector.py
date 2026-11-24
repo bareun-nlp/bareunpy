@@ -9,6 +9,7 @@ import bareunpy.bareun.lang_common_pb2 as lpb
 from ._revision_service_client import BareunRevisionServiceClient
 from bareunpy._tagger import _resolve_port
 from bareunpy._truncation import TruncationInfo, truncation_of
+from ._session import RevisionSession
 
 
 class Corrector:
@@ -137,8 +138,33 @@ class Corrector:
 
         return self.client.stream_correct_error(request)
 
+    def open_session(self, custom_dicts: Optional[List[str]] = None,
+                     config: Union[pb.RevisionConfig, None] = None) -> RevisionSession:
+        """교정 세션을 엽니다. 긴 문서를 여러 번에 나눠 교정할 때 씁니다.
+
+        세션 안의 호출은 같은 문서로 취급되어, 앞 호출에서 두 번 이상 나온 미등록 단어를 뒤 호출에서
+        고치지 않습니다. 사용자 사전과 설정은 여기서 한 번 정하고 세션이 닫힐 때까지 바뀌지 않습니다.
+
+        .. code-block:: python
+            >>> with corrector.open_session() as session:
+            ...     res = session.correct_error(part)
+
+        Args:
+            custom_dicts (List[str]): 사용자 사전의 이름 목록
+            config (Union[pb.RevisionConfig, None]): 교정 설정
+
+        Returns:
+            RevisionSession: 열린 세션(``with`` 문으로 쓰면 끝날 때 닫는다)
+        """
+        request = pb.OpenSessionRequest()
+        if custom_dicts:
+            request.custom_dict_names.extend(custom_dicts)
+        if config is not None:
+            request.config.CopyFrom(config)
+        return RevisionSession(self.client, self.client.open_session(request))
+
     def close(self) -> None:
-        """내부 세션을 닫습니다(선택)."""
+        """내부 세션을 닫습니다(선택). 교정 세션은 :meth:`RevisionSession.close` 로 따로 닫습니다."""
         self.client.close()
 
     @staticmethod

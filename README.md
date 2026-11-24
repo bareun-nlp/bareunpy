@@ -10,6 +10,9 @@
 
 ### 2.2.0
 
+- **교정 세션 지원**: 긴 문서를 여러 번에 나눠 교정할 때 `corrector.open_session()` 으로 세션을 엽니다. 서버가 같은 문서임을 알고 동작해, 앞 호출에서 두 번 이상 나온 미등록 단어를 뒤 호출에서 고치지 않습니다.
+  - `RevisionSession`: `correct_error()`, `correct_error_stream()`, `events()`, `close()`, `with` 문 지원
+  - 서버가 세션을 지원해야 합니다(바른 3.3.1 이상).
 - **긴 글 요청의 잘림(truncation) 응답 지원**: 서버는 요청 글이 기준(운영 서버 `api.bareun.ai` 는 9,000자)을 넘으면 거절하지 않고 앞부분(5,000자 안팎)만 처리하고, 버린 부분을 응답으로 알립니다. 이제 이 정보를 읽을 수 있습니다.
   - `Tagged` / `Tokenized`: `is_truncated()`, `truncation()`, `dropped_text()`
   - `Corrector`: `Corrector.is_truncated(res)`, `Corrector.truncation(res)`, `print_results()` 가 안내 문구를 함께 출력
@@ -348,6 +351,36 @@ if t:
 뒷부분까지 처리하려면 `dropped_text()` 로 받은 나머지를 다시 요청하면 됩니다. `taglist()` 는
 문장 목록 요청이라 `t.dropped_begin_sentence_index` 번째 문장부터 처리되지 않았고, 그보다 앞
 문장은 모두 처리됩니다(응답의 문장 수는 요청과 같고, 처리되지 않은 문장은 빈 문장으로 채워집니다).
+
+### 긴 문서는 세션으로 나눠 보내기
+
+문서가 서버 기준보다 길면 앞부분만 교정되므로, 나머지를 이어서 보내야 합니다. 이때 **세션**을 열면
+서버가 같은 문서임을 알고 동작합니다. 앞 호출에서 두 번 이상 나온 미등록 단어(인명, 신조어 등)는
+알려진 말로 확정되어 뒤 호출에서 고치지 않습니다. 사용자 사전과 교정 설정은 세션을 열 때 한 번 정하고
+닫을 때까지 바뀌지 않습니다. 세션은 마지막 호출 뒤 10분이 지나거나 열린 지 1시간이 지나면 서버가
+닫고, 키당 동시에 열 수 있는 수에 상한이 있으니 끝나면 닫습니다(`with` 문이 알아서 닫습니다).
+
+```python
+from bareunpy import Corrector
+
+corrector = Corrector(API_KEY)
+text = "..."  # 아주 긴 문서
+
+revised = []
+with corrector.open_session(custom_dicts=["my_dict"]) as session:
+    while text:
+        res = session.correct_error(text)
+        revised.append(res.revised)
+        t = Corrector.truncation(res)               # 잘리지 않았으면 None
+        text = t.dropped_text(text) if t else ""    # 교정되지 않은 뒷부분을 이어서 보냄
+print("".join(revised))
+```
+
+문서를 직접 문단 단위로 나눠 호출해도 됩니다. 단발 호출(`session.correct_error`)로 앞 답을 받은 뒤
+뒤 호출 때문에 앞 답이 달라졌는지는 `session.events()` 로 확인합니다(`session_revision` 이 올랐으면
+미등록 단어가 새로 확정된 것입니다). 스트리밍(`session.correct_error_stream`)은 같은 정보를
+`session_correction` 응답으로 보내 주고, 되돌릴 구간(`reverted`)의 교정을 취소하면 됩니다. 세션이
+만료되거나 서버가 모르면 `NOT_FOUND` 오류가 나니, 세션을 다시 열고 필요한 앞부분부터 다시 보냅니다.
 
 ---
 

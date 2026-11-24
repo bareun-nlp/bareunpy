@@ -90,3 +90,45 @@ class BareunRevisionServiceClient:
                 yield resp
         except ConnectError as e:
             self._handle_connect_error(e)
+
+    def open_session(self, request: pb.OpenSessionRequest) -> pb.OpenSessionResponse:
+        """교정 세션을 엽니다(단발 unary 호출).
+
+        Args:
+            request (pb.OpenSessionRequest): 세션을 열 때 정할 사용자 사전과 교정 설정
+
+        Returns:
+            pb.OpenSessionResponse: 세션 ID 와 수명(유휴·최대 시간)
+        """
+        try:
+            return self.stub.open_session(request, headers=self.metadata)
+        except ConnectError as e:
+            self._handle_connect_error(e)
+
+    def close_session(self, request: pb.CloseSessionRequest) -> pb.CloseSessionResponse:
+        """교정 세션을 닫습니다(단발 unary 호출).
+
+        Args:
+            request (pb.CloseSessionRequest): 닫을 세션 ID
+
+        Returns:
+            pb.CloseSessionResponse: 닫힌 시점의 세션 개정 번호
+        """
+        try:
+            return self.stub.close_session(request, headers=self.metadata)
+        except ConnectError as e:
+            self._handle_connect_error(e)
+
+    def get_session_events(self, request: pb.GetSessionEventsRequest) -> pb.GetSessionEventsResponse:
+        """세션의 변경 사건(미등록 단어 확정 등)을 가져옵니다(단발 unary 호출).
+
+        Args:
+            request (pb.GetSessionEventsRequest): 세션 ID 와 이 번호보다 큰 개정만 받을 기준
+
+        Returns:
+            pb.GetSessionEventsResponse: 지금의 세션 개정 번호와 사건 목록
+        """
+        try:
+            return self.stub.get_session_events(request, headers=self.metadata)
+        except ConnectError as e:
+            self._handle_connect_error(e)
