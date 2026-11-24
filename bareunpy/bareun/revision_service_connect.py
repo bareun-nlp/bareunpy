@@ -24,6 +24,15 @@ class RevisionService(Protocol):
     def stream_correct_error(self, request: bareun_dot_revision__service__pb2.StreamCorrectErrorRequest, ctx: RequestContext) -> AsyncIterator[bareun_dot_revision__service__pb2.StreamCorrectErrorResponse]:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
+    async def open_session(self, request: bareun_dot_revision__service__pb2.OpenSessionRequest, ctx: RequestContext) -> bareun_dot_revision__service__pb2.OpenSessionResponse:
+        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+
+    async def close_session(self, request: bareun_dot_revision__service__pb2.CloseSessionRequest, ctx: RequestContext) -> bareun_dot_revision__service__pb2.CloseSessionResponse:
+        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+
+    async def get_session_events(self, request: bareun_dot_revision__service__pb2.GetSessionEventsRequest, ctx: RequestContext) -> bareun_dot_revision__service__pb2.GetSessionEventsResponse:
+        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+
 
 class RevisionServiceASGIApplication(ConnectASGIApplication[RevisionService]):
     def __init__(self, service: RevisionService | AsyncGenerator[RevisionService], *, interceptors: Iterable[Interceptor]=(), read_max_bytes: int | None = None, compressions: Iterable[Compression] | None = None, codecs: Iterable[Codec] | None = None) -> None:
@@ -49,6 +58,36 @@ class RevisionServiceASGIApplication(ConnectASGIApplication[RevisionService]):
                         idempotency_level=IdempotencyLevel.UNKNOWN,
                     ),
                     function=svc.stream_correct_error,
+                ),
+                "/bareun.RevisionService/OpenSession": Endpoint.unary(
+                    method=MethodInfo(
+                        name="OpenSession",
+                        service_name="bareun.RevisionService",
+                        input=bareun_dot_revision__service__pb2.OpenSessionRequest,
+                        output=bareun_dot_revision__service__pb2.OpenSessionResponse,
+                        idempotency_level=IdempotencyLevel.UNKNOWN,
+                    ),
+                    function=svc.open_session,
+                ),
+                "/bareun.RevisionService/CloseSession": Endpoint.unary(
+                    method=MethodInfo(
+                        name="CloseSession",
+                        service_name="bareun.RevisionService",
+                        input=bareun_dot_revision__service__pb2.CloseSessionRequest,
+                        output=bareun_dot_revision__service__pb2.CloseSessionResponse,
+                        idempotency_level=IdempotencyLevel.UNKNOWN,
+                    ),
+                    function=svc.close_session,
+                ),
+                "/bareun.RevisionService/GetSessionEvents": Endpoint.unary(
+                    method=MethodInfo(
+                        name="GetSessionEvents",
+                        service_name="bareun.RevisionService",
+                        input=bareun_dot_revision__service__pb2.GetSessionEventsRequest,
+                        output=bareun_dot_revision__service__pb2.GetSessionEventsResponse,
+                        idempotency_level=IdempotencyLevel.UNKNOWN,
+                    ),
+                    function=svc.get_session_events,
                 ),
             },
             interceptors=interceptors,
@@ -104,6 +143,66 @@ class RevisionServiceClient(ConnectClient):
             timeout_ms=timeout_ms,
         )
 
+    async def open_session(
+        self,
+        request: bareun_dot_revision__service__pb2.OpenSessionRequest,
+        *,
+        headers: Headers | Mapping[str, str] | None = None,
+        timeout_ms: int | None = None,
+    ) -> bareun_dot_revision__service__pb2.OpenSessionResponse:
+        return await self.execute_unary(
+            request=request,
+            method=MethodInfo(
+                name="OpenSession",
+                service_name="bareun.RevisionService",
+                input=bareun_dot_revision__service__pb2.OpenSessionRequest,
+                output=bareun_dot_revision__service__pb2.OpenSessionResponse,
+                idempotency_level=IdempotencyLevel.UNKNOWN,
+            ),
+            headers=headers,
+            timeout_ms=timeout_ms,
+        )
+
+    async def close_session(
+        self,
+        request: bareun_dot_revision__service__pb2.CloseSessionRequest,
+        *,
+        headers: Headers | Mapping[str, str] | None = None,
+        timeout_ms: int | None = None,
+    ) -> bareun_dot_revision__service__pb2.CloseSessionResponse:
+        return await self.execute_unary(
+            request=request,
+            method=MethodInfo(
+                name="CloseSession",
+                service_name="bareun.RevisionService",
+                input=bareun_dot_revision__service__pb2.CloseSessionRequest,
+                output=bareun_dot_revision__service__pb2.CloseSessionResponse,
+                idempotency_level=IdempotencyLevel.UNKNOWN,
+            ),
+            headers=headers,
+            timeout_ms=timeout_ms,
+        )
+
+    async def get_session_events(
+        self,
+        request: bareun_dot_revision__service__pb2.GetSessionEventsRequest,
+        *,
+        headers: Headers | Mapping[str, str] | None = None,
+        timeout_ms: int | None = None,
+    ) -> bareun_dot_revision__service__pb2.GetSessionEventsResponse:
+        return await self.execute_unary(
+            request=request,
+            method=MethodInfo(
+                name="GetSessionEvents",
+                service_name="bareun.RevisionService",
+                input=bareun_dot_revision__service__pb2.GetSessionEventsRequest,
+                output=bareun_dot_revision__service__pb2.GetSessionEventsResponse,
+                idempotency_level=IdempotencyLevel.UNKNOWN,
+            ),
+            headers=headers,
+            timeout_ms=timeout_ms,
+        )
+
 
 
 
@@ -112,6 +211,12 @@ class RevisionServiceSync(Protocol):
     def correct_error(self, request: bareun_dot_revision__service__pb2.CorrectErrorRequest, ctx: RequestContext) -> bareun_dot_revision__service__pb2.CorrectErrorResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
     def stream_correct_error(self, request: bareun_dot_revision__service__pb2.StreamCorrectErrorRequest, ctx: RequestContext) -> Iterator[bareun_dot_revision__service__pb2.StreamCorrectErrorResponse]:
+        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+    def open_session(self, request: bareun_dot_revision__service__pb2.OpenSessionRequest, ctx: RequestContext) -> bareun_dot_revision__service__pb2.OpenSessionResponse:
+        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+    def close_session(self, request: bareun_dot_revision__service__pb2.CloseSessionRequest, ctx: RequestContext) -> bareun_dot_revision__service__pb2.CloseSessionResponse:
+        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+    def get_session_events(self, request: bareun_dot_revision__service__pb2.GetSessionEventsRequest, ctx: RequestContext) -> bareun_dot_revision__service__pb2.GetSessionEventsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
 
@@ -138,6 +243,36 @@ class RevisionServiceWSGIApplication(ConnectWSGIApplication):
                         idempotency_level=IdempotencyLevel.UNKNOWN,
                     ),
                     function=service.stream_correct_error,
+                ),
+                "/bareun.RevisionService/OpenSession": EndpointSync.unary(
+                    method=MethodInfo(
+                        name="OpenSession",
+                        service_name="bareun.RevisionService",
+                        input=bareun_dot_revision__service__pb2.OpenSessionRequest,
+                        output=bareun_dot_revision__service__pb2.OpenSessionResponse,
+                        idempotency_level=IdempotencyLevel.UNKNOWN,
+                    ),
+                    function=service.open_session,
+                ),
+                "/bareun.RevisionService/CloseSession": EndpointSync.unary(
+                    method=MethodInfo(
+                        name="CloseSession",
+                        service_name="bareun.RevisionService",
+                        input=bareun_dot_revision__service__pb2.CloseSessionRequest,
+                        output=bareun_dot_revision__service__pb2.CloseSessionResponse,
+                        idempotency_level=IdempotencyLevel.UNKNOWN,
+                    ),
+                    function=service.close_session,
+                ),
+                "/bareun.RevisionService/GetSessionEvents": EndpointSync.unary(
+                    method=MethodInfo(
+                        name="GetSessionEvents",
+                        service_name="bareun.RevisionService",
+                        input=bareun_dot_revision__service__pb2.GetSessionEventsRequest,
+                        output=bareun_dot_revision__service__pb2.GetSessionEventsResponse,
+                        idempotency_level=IdempotencyLevel.UNKNOWN,
+                    ),
+                    function=service.get_session_events,
                 ),
             },
             interceptors=interceptors,
@@ -187,6 +322,66 @@ class RevisionServiceClientSync(ConnectClientSync):
                 service_name="bareun.RevisionService",
                 input=bareun_dot_revision__service__pb2.StreamCorrectErrorRequest,
                 output=bareun_dot_revision__service__pb2.StreamCorrectErrorResponse,
+                idempotency_level=IdempotencyLevel.UNKNOWN,
+            ),
+            headers=headers,
+            timeout_ms=timeout_ms,
+        )
+
+    def open_session(
+        self,
+        request: bareun_dot_revision__service__pb2.OpenSessionRequest,
+        *,
+        headers: Headers | Mapping[str, str] | None = None,
+        timeout_ms: int | None = None,
+    ) -> bareun_dot_revision__service__pb2.OpenSessionResponse:
+        return self.execute_unary(
+            request=request,
+            method=MethodInfo(
+                name="OpenSession",
+                service_name="bareun.RevisionService",
+                input=bareun_dot_revision__service__pb2.OpenSessionRequest,
+                output=bareun_dot_revision__service__pb2.OpenSessionResponse,
+                idempotency_level=IdempotencyLevel.UNKNOWN,
+            ),
+            headers=headers,
+            timeout_ms=timeout_ms,
+        )
+
+    def close_session(
+        self,
+        request: bareun_dot_revision__service__pb2.CloseSessionRequest,
+        *,
+        headers: Headers | Mapping[str, str] | None = None,
+        timeout_ms: int | None = None,
+    ) -> bareun_dot_revision__service__pb2.CloseSessionResponse:
+        return self.execute_unary(
+            request=request,
+            method=MethodInfo(
+                name="CloseSession",
+                service_name="bareun.RevisionService",
+                input=bareun_dot_revision__service__pb2.CloseSessionRequest,
+                output=bareun_dot_revision__service__pb2.CloseSessionResponse,
+                idempotency_level=IdempotencyLevel.UNKNOWN,
+            ),
+            headers=headers,
+            timeout_ms=timeout_ms,
+        )
+
+    def get_session_events(
+        self,
+        request: bareun_dot_revision__service__pb2.GetSessionEventsRequest,
+        *,
+        headers: Headers | Mapping[str, str] | None = None,
+        timeout_ms: int | None = None,
+    ) -> bareun_dot_revision__service__pb2.GetSessionEventsResponse:
+        return self.execute_unary(
+            request=request,
+            method=MethodInfo(
+                name="GetSessionEvents",
+                service_name="bareun.RevisionService",
+                input=bareun_dot_revision__service__pb2.GetSessionEventsRequest,
+                output=bareun_dot_revision__service__pb2.GetSessionEventsResponse,
                 idempotency_level=IdempotencyLevel.UNKNOWN,
             ),
             headers=headers,
